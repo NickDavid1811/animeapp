@@ -1,0 +1,39 @@
+name: animeapp
+description: "A new Flutter project."
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: ^3.5.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+  http: ^1.6.0
+  sqflite_common_ffi: ^2.3.4+4
+  sqflite_common_ffi_web: ^0.4.5+2
+  path_provider: ^2.0.11
+  shared_preferences: ^2.3.2
+  path: ^1.9.1
+  cached_network_image: ^3.4.1
+  provider: ^6.1.5+1
+  google_fonts: ^6.2.1
+  fpdart: ^1.2.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/animeiconv3.jpeg"
+  min_sdk_android: 24
+
+
+flutter:
+  uses-material-design: true
+  assets:
+      - assets/icon/

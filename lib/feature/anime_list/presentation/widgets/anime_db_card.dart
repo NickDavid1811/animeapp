@@ -1,0 +1,196 @@
+import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:animeapp/shared/domain/entities/anime_entity.dart';
+import 'package:animeapp/core/utils/number_formatter.dart';
+import 'package:animeapp/feature/anime_list/presentation/utils/anime_detail_helper.dart';
+
+class AnimeDbCard extends StatefulWidget {
+  final AnimeEntity anime;
+  final VoidCallback onDelete;
+
+  const AnimeDbCard({
+    super.key,
+    required this.anime,
+    required this.onDelete,
+  });
+
+  @override
+  State<AnimeDbCard> createState() => _AnimeDbCardState();
+}
+
+class _AnimeDbCardState extends State<AnimeDbCard> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    final theme = Theme.of(context);
+    final anime = widget.anime;
+    
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: AnimatedScale(
+        scale: _isHovered ? 1.02 : 1.0,
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOutCubic,
+        child: Card(
+          elevation: _isHovered ? 8 : 0,
+          clipBehavior: Clip.antiAlias,
+          color: theme.colorScheme.surface,
+          margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(
+              color: _isHovered
+                  ? theme.colorScheme.primary.withAlpha(100)
+                  : theme.colorScheme.outlineVariant.withAlpha(40),
+              width: 1,
+            ),
+          ),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () {
+              AnimeDetailHelper.showDetail(context, widget.anime);
+            },
+            child: IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Image
+                  CachedNetworkImage(
+                    imageUrl: anime.imageUrl,
+                    width: 100,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => Container(
+                      width: 100,
+                      color: theme.colorScheme.surfaceContainerHighest,
+                      child: const Center(
+                        child: SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      ),
+                    ),
+                    errorWidget: (context, url, error) => Container(
+                      width: 100,
+                      color: theme.colorScheme.surfaceContainerHighest,
+                      child: const Icon(Icons.broken_image_rounded),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  // Info
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Title
+                          Text(
+                            anime.title,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              height: 1.2,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              if (anime.year != null) ...[
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: theme.colorScheme.primaryContainer,
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    '${anime.year}',
+                                    style: theme.textTheme.labelSmall?.copyWith(
+                                      color: theme.colorScheme.onPrimaryContainer,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                              ],
+                              if (anime.episodes != null)
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.tv_rounded, size: 12, color: theme.colorScheme.primary),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      '${anime.episodes} eps',
+                                      style: theme.textTheme.labelSmall,
+                                    ),
+                                  ],
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          // Bottom Row (Stats & Delete)
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              if (anime.members != null)
+                                Flexible(
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.people_alt_rounded, size: 12, color: theme.colorScheme.outline),
+                                      const SizedBox(width: 4),
+                                      Flexible(
+                                        child: Text(
+                                          NumberFormatter.formatNumber(anime.members),
+                                          style: theme.textTheme.labelSmall?.copyWith(
+                                            color: theme.colorScheme.outline,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              else
+                                const SizedBox(),
+                              SizedBox(
+                                width: 32,
+                                height: 32,
+                                child: IconButton(
+                                  padding: EdgeInsets.zero,
+                                  iconSize: 18,
+                                  style: IconButton.styleFrom(
+                                    backgroundColor: theme.colorScheme.errorContainer,
+                                    foregroundColor: theme.colorScheme.onErrorContainer,
+                                  ),
+                                  icon: const Icon(Icons.delete_outline_rounded),
+                                  onPressed: widget.onDelete,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
