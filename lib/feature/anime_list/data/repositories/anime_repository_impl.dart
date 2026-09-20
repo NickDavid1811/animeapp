@@ -41,15 +41,17 @@ class AnimeRepositoryImpl implements AnimeRepositoryInterface {
       return Right(fetched);
     } catch (e) {
       // Fallback resiliente: Si la API externa falla (ej. error 504 de MyAnimeList),
-      // buscamos en los animes ya cargados en memoria
-      final queryLower = query.toLowerCase();
-      final localMatches = _pageCache.values
-          .expand((list) => list)
-          .where((anime) => anime.title.toLowerCase().contains(queryLower))
-          .toList();
+      // solo buscamos en memoria si el usuario realmente escribió un texto de búsqueda
+      if (query.trim().isNotEmpty) {
+        final queryLower = query.trim().toLowerCase();
+        final localMatches = _pageCache.values
+            .expand((list) => list)
+            .where((anime) => anime.title.toLowerCase().contains(queryLower))
+            .toList();
 
-      if (localMatches.isNotEmpty) {
-        return Right(localMatches);
+        if (localMatches.isNotEmpty) {
+          return Right(localMatches);
+        }
       }
 
       final errorClean = e.toString().replaceFirst('Exception: ', '');

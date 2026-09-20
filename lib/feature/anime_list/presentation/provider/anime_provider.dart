@@ -204,32 +204,31 @@ class AnimeProvider extends ChangeNotifier {
       await result.fold(
         (failure) async {
           // Fallback resiliente si la API de Jikan da 504 por saturación al filtrar géneros:
-          // Obtenemos los Top animes (que siempre responden 200 OK en caché) y filtramos localmente
-          final topResult = await getTopAnimeUseCase(1);
-          topResult.fold(
-            (_) {
-              _errorMessage = failure.message;
-            },
-            (topList) {
-              final queryLower = (_selectedGenreQuery ?? '').toLowerCase();
-              final filtered = topList.where((a) => a.genres.any(
-                (g) => g.toLowerCase().contains(queryLower),
-              )).toList();
+          // Consultamos las páginas 1 y 2 de Top Anime (ambas 100% cacheadas con 200 OK en Nginx)
+          final topResult1 = await getTopAnimeUseCase(1);
+          final topResult2 = await getTopAnimeUseCase(2);
 
-              if (filtered.isNotEmpty) {
-                final existingIds = _animes.map((e) => e.malId).toSet();
-                for (final anime in filtered) {
-                  if (!existingIds.contains(anime.malId)) {
-                    _animes.add(anime);
-                    existingIds.add(anime.malId);
-                  }
-                }
-                _errorMessage = null;
-              } else {
-                _errorMessage = failure.message;
+          final combined = <AnimeEntity>[];
+          topResult1.fold((_) {}, (list) => combined.addAll(list));
+          topResult2.fold((_) {}, (list) => combined.addAll(list));
+
+          final queryLower = (_selectedGenreQuery ?? '').toLowerCase();
+          final filtered = combined.where((a) => a.genres.any(
+            (g) => g.toLowerCase().contains(queryLower),
+          )).toList();
+
+          if (filtered.isNotEmpty) {
+            final existingIds = _animes.map((e) => e.malId).toSet();
+            for (final anime in filtered) {
+              if (!existingIds.contains(anime.malId)) {
+                _animes.add(anime);
+                existingIds.add(anime.malId);
               }
-            },
-          );
+            }
+            _errorMessage = null;
+          } else {
+            _errorMessage = 'No se encontraron animes de la categoría "$_selectedGenreLabel" en el catálogo disponible.';
+          }
         },
         (newAnimes) async {
           final existingIds = _animes.map((e) => e.malId).toSet();

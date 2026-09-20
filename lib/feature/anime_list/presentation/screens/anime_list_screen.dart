@@ -308,6 +308,34 @@ class _AnimeListScreenState extends State<AnimeListScreen> {
                     );
                   }
 
+                  if (!provider.isLoading && provider.animes.isEmpty && provider.selectedGenreLabel != null) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 32),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.category_outlined, size: 64, color: theme.colorScheme.outline),
+                            const SizedBox(height: 16),
+                            Text(
+                              'No se encontraron animes en la categoría ${provider.selectedGenreLabel}',
+                              textAlign: TextAlign.center,
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                color: theme.colorScheme.outline,
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                            FilledButton.tonalIcon(
+                              onPressed: () => provider.clearGenreFilter(),
+                              icon: const Icon(Icons.close_rounded, size: 18),
+                              label: const Text('Quitar filtro'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+
                   return LayoutBuilder(
                     builder: (context, constraints) {
                       final isWideScreen = constraints.maxWidth >= 600;
