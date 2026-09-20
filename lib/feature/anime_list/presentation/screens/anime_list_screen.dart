@@ -64,6 +64,15 @@ class _AnimeListScreenState extends State<AnimeListScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final providerQuery = context.select<AnimeProvider, String>((p) => p.currentQuery);
+    final isDebouncing = _debounce?.isActive ?? false;
+    if (!isDebouncing && _searchController.text != providerQuery) {
+      _searchController.value = TextEditingValue(
+        text: providerQuery,
+        selection: TextSelection.collapsed(offset: providerQuery.length),
+      );
+    }
+
     return Scaffold(
       body: SafeArea(
         child: Column(

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:animeapp/feature/home/presentation/widgets/home_tab.dart';
 import 'package:animeapp/feature/anime_list/presentation/screens/anime_list_screen.dart';
 import 'package:animeapp/feature/anime_list/presentation/screens/favorites_screen.dart';
+import 'package:animeapp/feature/anime_list/presentation/provider/anime_provider.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -19,6 +21,17 @@ class _HomeScreenState extends State<HomeScreen> {
     final List<Widget> screens = [
       HomeTab(
         onExploreTap: () {
+          setState(() {
+            _currentIndex = 1;
+          });
+        },
+        onFavoritesTap: () {
+          setState(() {
+            _currentIndex = 2;
+          });
+        },
+        onGenreTap: (genre) {
+          context.read<AnimeProvider>().search(genre);
           setState(() {
             _currentIndex = 1;
           });
