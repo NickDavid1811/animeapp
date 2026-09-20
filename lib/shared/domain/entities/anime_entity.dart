@@ -4,6 +4,7 @@
 class AnimeEntity {
   final int malId;
   final String title;
+  final String? titleJapanese;
   final String imageUrl;
   final int? year;
   final int? episodes;
@@ -16,6 +17,7 @@ class AnimeEntity {
   const AnimeEntity({
     required this.malId,
     required this.title,
+    this.titleJapanese,
     required this.imageUrl,
     this.year,
     this.episodes,

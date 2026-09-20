@@ -4,6 +4,7 @@ class AnimeModel extends AnimeEntity {
   const AnimeModel({
     required super.malId,
     required super.title,
+    super.titleJapanese,
     required super.imageUrl,
     super.year,
     super.episodes,
@@ -30,15 +31,37 @@ class AnimeModel extends AnimeEntity {
           .toList();
     }
 
-    // Extracción de ID de YouTube para el tráiler
+    // Extracción robusta de ID de YouTube (youtube_id, embed_url o url)
     String? trailerId;
     if (json['trailer'] is Map) {
-      trailerId = json['trailer']['youtube_id'] as String?;
+      final trailerMap = json['trailer'] as Map;
+      final rawId = trailerMap['youtube_id'] as String?;
+      if (rawId != null && rawId.isNotEmpty) {
+        trailerId = rawId;
+      } else {
+        final embedUrl = trailerMap['embed_url'] as String?;
+        if (embedUrl != null) {
+          final match = RegExp(r'/embed/([a-zA-Z0-9_-]+)').firstMatch(embedUrl);
+          if (match != null) {
+            trailerId = match.group(1);
+          }
+        }
+        if (trailerId == null) {
+          final url = trailerMap['url'] as String?;
+          if (url != null) {
+            final match = RegExp(r'(?:v=|\/)([a-zA-Z0-9_-]{11})').firstMatch(url);
+            if (match != null) {
+              trailerId = match.group(1);
+            }
+          }
+        }
+      }
     }
 
     return AnimeModel(
       malId: json['mal_id'] as int,
       title: json['title'] as String? ?? '',
+      titleJapanese: json['title_japanese'] as String?,
       imageUrl: imageUrl,
       year: json['year'] != null ? json['year'] as int : null,
       episodes: json['episodes'] != null ? json['episodes'] as int : null,
@@ -54,6 +77,7 @@ class AnimeModel extends AnimeEntity {
     return {
       'malId': malId,
       'title': title,
+      'titleJapanese': titleJapanese,
       'imageUrl': imageUrl,
       'year': year,
       'episodes': episodes,

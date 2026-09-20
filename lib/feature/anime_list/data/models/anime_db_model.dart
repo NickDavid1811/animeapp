@@ -4,6 +4,7 @@ class AnimeDbModel extends AnimeEntity {
   const AnimeDbModel({
     required super.malId,
     required super.title,
+    super.titleJapanese,
     required super.imageUrl,
     super.year,
     super.episodes,
@@ -23,6 +24,7 @@ class AnimeDbModel extends AnimeEntity {
     return AnimeDbModel(
       malId: json['malId'] as int,
       title: json['title'] as String? ?? '',
+      titleJapanese: json['titleJapanese'] as String?,
       imageUrl: json['imageUrl'] as String? ?? '',
       year: json['year'] as int?,
       episodes: json['episodes'] as int?,
@@ -38,6 +40,7 @@ class AnimeDbModel extends AnimeEntity {
     return {
       'malId': malId,
       'title': title,
+      'titleJapanese': titleJapanese,
       'imageUrl': imageUrl,
       'year': year,
       'episodes': episodes,
@@ -53,6 +56,7 @@ class AnimeDbModel extends AnimeEntity {
     return AnimeDbModel(
       malId: entity.malId,
       title: entity.title,
+      titleJapanese: entity.titleJapanese,
       imageUrl: entity.imageUrl,
       year: entity.year,
       episodes: entity.episodes,

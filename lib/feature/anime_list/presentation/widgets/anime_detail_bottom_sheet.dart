@@ -92,7 +92,18 @@ class AnimeDetailBottomSheet extends StatelessWidget {
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 10),
+                        if (anime.titleJapanese != null && anime.titleJapanese!.isNotEmpty) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            anime.titleJapanese!,
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: theme.colorScheme.primary.withAlpha(200),
+                              fontWeight: FontWeight.w500,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 8),
                         // Badges (Score, Year, Episodes)
                         Wrap(
                           spacing: 6,
