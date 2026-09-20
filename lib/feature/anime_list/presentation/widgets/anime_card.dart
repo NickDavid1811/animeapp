@@ -8,12 +8,14 @@ class AnimeCard extends StatefulWidget {
   final AnimeEntity anime;
   final bool isSaved;
   final VoidCallback onToggle;
+  final bool showDeleteIcon;
 
   const AnimeCard({
     super.key,
     required this.anime,
-    required this.isSaved,
+    this.isSaved = false,
     required this.onToggle,
+    this.showDeleteIcon = false,
   });
 
   @override
@@ -172,16 +174,21 @@ class _AnimeCardState extends State<AnimeCard> with AutomaticKeepAliveClientMixi
                                 child: IconButton(
                                   padding: EdgeInsets.zero,
                                   iconSize: 18,
+                                  tooltip: widget.showDeleteIcon
+                                      ? 'Eliminar de favoritos'
+                                      : (widget.isSaved ? 'Quitar de favoritos' : 'Guardar en favoritos'),
                                   style: IconButton.styleFrom(
-                                    backgroundColor: widget.isSaved
+                                    backgroundColor: (widget.showDeleteIcon || widget.isSaved)
                                         ? theme.colorScheme.errorContainer
                                         : theme.colorScheme.surfaceContainerHighest,
-                                    foregroundColor: widget.isSaved
+                                    foregroundColor: (widget.showDeleteIcon || widget.isSaved)
                                         ? theme.colorScheme.onErrorContainer
                                         : theme.colorScheme.onSurfaceVariant,
                                   ),
                                   icon: Icon(
-                                    widget.isSaved ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                                    widget.showDeleteIcon
+                                        ? Icons.delete_outline_rounded
+                                        : (widget.isSaved ? Icons.favorite_rounded : Icons.favorite_border_rounded),
                                   ),
                                   onPressed: widget.onToggle,
                                 ),

@@ -1,18 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:animeapp/shared/domain/entities/anime_entity.dart';
 import 'package:animeapp/feature/anime_list/domain/usecases/get_top_anime_usecase.dart';
-import 'package:animeapp/feature/anime_list/domain/usecases/manage_favorites_usecase.dart';
+import 'package:animeapp/feature/anime_list/domain/usecases/get_favorite_animes_usecase.dart';
+import 'package:animeapp/feature/anime_list/domain/usecases/toggle_favorite_usecase.dart';
+import 'package:animeapp/feature/anime_list/domain/usecases/get_favorite_totals_usecase.dart';
 import 'package:animeapp/feature/anime_list/domain/usecases/search_anime_usecase.dart';
 
 class AnimeProvider extends ChangeNotifier {
   final GetTopAnimeUseCase getTopAnimeUseCase;
-  final ManageFavoritesUseCase manageFavoritesUseCase;
   final SearchAnimeUseCase searchAnimeUseCase;
+  final GetFavoriteAnimesUseCase getFavoriteAnimesUseCase;
+  final ToggleFavoriteUseCase toggleFavoriteUseCase;
+  final GetFavoriteTotalsUseCase getFavoriteTotalsUseCase;
 
   AnimeProvider({
     required this.getTopAnimeUseCase,
-    required this.manageFavoritesUseCase,
     required this.searchAnimeUseCase,
+    required this.getFavoriteAnimesUseCase,
+    required this.toggleFavoriteUseCase,
+    required this.getFavoriteTotalsUseCase,
   });
 
   final List<AnimeEntity> _animes = [];
@@ -94,7 +100,7 @@ class AnimeProvider extends ChangeNotifier {
   Future<void> loadFavorites() async {
     _errorMessage = null;
     
-    final resultFavorites = await manageFavoritesUseCase.getFavorites();
+    final resultFavorites = await getFavoriteAnimesUseCase();
     resultFavorites.fold(
       (failure) {
         _errorMessage = failure.message;
@@ -105,7 +111,7 @@ class AnimeProvider extends ChangeNotifier {
       },
     );
 
-    final resultTotals = await manageFavoritesUseCase.getTotals();
+    final resultTotals = await getFavoriteTotalsUseCase();
     resultTotals.fold(
       (failure) {
         _errorMessage = failure.message;
@@ -121,7 +127,7 @@ class AnimeProvider extends ChangeNotifier {
 
   Future<void> toggleFavorite(AnimeEntity anime) async {
     _errorMessage = null;
-    final result = await manageFavoritesUseCase.toggleFavorite(anime);
+    final result = await toggleFavoriteUseCase(anime);
     
     result.fold(
       (failure) {

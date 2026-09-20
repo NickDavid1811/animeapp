@@ -14,8 +14,10 @@ void main() async {
     ChangeNotifierProvider(
       create: (_) => AnimeProvider(
         getTopAnimeUseCase: DI.getTopAnimeUseCase,
-        manageFavoritesUseCase: DI.manageFavoritesUseCase,
         searchAnimeUseCase: DI.searchAnimeUseCase,
+        getFavoriteAnimesUseCase: DI.getFavoriteAnimesUseCase,
+        toggleFavoriteUseCase: DI.toggleFavoriteUseCase,
+        getFavoriteTotalsUseCase: DI.getFavoriteTotalsUseCase,
       ),
       child: const MainApp(),
     ),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:animeapp/feature/anime_list/presentation/provider/anime_provider.dart';
-import 'package:animeapp/feature/anime_list/presentation/widgets/anime_db_card.dart';
+import 'package:animeapp/feature/anime_list/presentation/widgets/anime_card.dart';
 import 'package:animeapp/core/utils/number_formatter.dart';
 import 'package:animeapp/core/theme/app_theme.dart';
 
@@ -202,9 +202,11 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                                 ),
                                 itemBuilder: (context, index) {
                                   final anime = provider.favoriteAnimes[index];
-                                  return AnimeDbCard(
+                                  return AnimeCard(
                                     anime: anime,
-                                    onDelete: () => provider.toggleFavorite(anime),
+                                    isSaved: true,
+                                    showDeleteIcon: true,
+                                    onToggle: () => provider.toggleFavorite(anime),
                                   );
                                 },
                               );
@@ -215,9 +217,11 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 20),
                               itemBuilder: (context, index) {
                                 final anime = provider.favoriteAnimes[index];
-                                return AnimeDbCard(
+                                return AnimeCard(
                                   anime: anime,
-                                  onDelete: () => provider.toggleFavorite(anime),
+                                  isSaved: true,
+                                  showDeleteIcon: true,
+                                  onToggle: () => provider.toggleFavorite(anime),
                                 );
                               },
                             );
