@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:animeapp/shared/domain/entities/anime_entity.dart';
@@ -122,13 +123,58 @@ class _AnimeDetailBottomSheetState extends State<AnimeDetailBottomSheet> {
                           overflow: TextOverflow.ellipsis,
                         ),
                         if (anime.titleJapanese != null && anime.titleJapanese!.isNotEmpty) ...[
-                          const SizedBox(height: 2),
-                          Text(
-                            anime.titleJapanese!,
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color: theme.colorScheme.primary.withAlpha(200),
-                              fontWeight: FontWeight.w500,
-                              letterSpacing: 0.5,
+                          const SizedBox(height: 3),
+                          Tooltip(
+                            message: 'Toca para copiar al portapapeles',
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(6),
+                              onTap: () async {
+                                await Clipboard.setData(ClipboardData(text: anime.titleJapanese!));
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Row(
+                                        children: [
+                                          const Icon(Icons.check_circle_outline_rounded, color: Colors.white, size: 18),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: Text('Copiado al portapapeles: ${anime.titleJapanese!}'),
+                                          ),
+                                        ],
+                                      ),
+                                      behavior: SnackBarBehavior.floating,
+                                      duration: const Duration(seconds: 2),
+                                    ),
+                                  );
+                                }
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        anime.titleJapanese!,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: theme.textTheme.labelSmall?.copyWith(
+                                          color: theme.colorScheme.primary.withAlpha(220),
+                                          fontWeight: FontWeight.w500,
+                                          letterSpacing: 0.5,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 5),
+                                    Icon(
+                                      Icons.copy_rounded,
+                                      size: 12,
+                                      color: theme.colorScheme.primary.withAlpha(160),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
                           ),
                         ],
