@@ -59,7 +59,30 @@ class AnimeRepositoryImpl implements AnimeRepositoryInterface {
   Future<Either<Failure, List<AnimeEntity>>> getFavoriteAnimes() async {
     try {
       final animes = await localDataSource.getFavoriteAnimes();
-      return Right(animes);
+
+      // Auto-reconciliación transparente con animes en la caché de memoria
+      final enrichedAnimes = <AnimeEntity>[];
+      for (final fav in animes) {
+        if (fav.titleJapanese == null || fav.trailerYoutubeId == null || fav.synopsis == null) {
+          AnimeEntity? cachedMatch;
+          for (final list in _pageCache.values) {
+            final match = list.where((a) => a.malId == fav.malId).firstOrNull;
+            if (match != null) {
+              cachedMatch = match;
+              break;
+            }
+          }
+          if (cachedMatch != null) {
+            // Actualizar silenciosamente en la base de datos local
+            await localDataSource.insertFavorite(AnimeDbModel.fromEntity(cachedMatch));
+            enrichedAnimes.add(cachedMatch);
+            continue;
+          }
+        }
+        enrichedAnimes.add(fav);
+      }
+
+      return Right(enrichedAnimes);
     } catch (e) {
       return Left(DatabaseFailure(e.toString()));
     }
@@ -88,6 +111,41 @@ class AnimeRepositoryImpl implements AnimeRepositoryInterface {
       return Right(totals);
     } catch (e) {
       return Left(DatabaseFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, AnimeEntity>> getAnimeDetails(int malId) async {
+    try {
+      // 1. Revisar si ya está en caché con datos completos
+      for (final list in _pageCache.values) {
+        final match = list.where((a) => a.malId == malId).firstOrNull;
+        if (match != null && match.titleJapanese != null && match.synopsis != null) {
+          return Right(match);
+        }
+      }
+
+      // 2. Consultar a la API remota
+      final fetched = await remoteDataSource.fetchAnimeDetails(malId);
+
+      // 3. Actualizar la caché de páginas si está presente
+      for (final entry in _pageCache.entries) {
+        final idx = entry.value.indexWhere((a) => a.malId == malId);
+        if (idx >= 0) {
+          entry.value[idx] = fetched;
+        }
+      }
+
+      // 4. Si el anime es un favorito guardado, actualizar la base de datos local con los datos completos
+      final favorites = await localDataSource.getFavoriteAnimes();
+      if (favorites.any((f) => f.malId == malId)) {
+        await localDataSource.insertFavorite(AnimeDbModel.fromEntity(fetched));
+      }
+
+      return Right(fetched);
+    } catch (e) {
+      final errorClean = e.toString().replaceFirst('Exception: ', '');
+      return Left(ServerFailure(errorClean));
     }
   }
 }

@@ -5,6 +5,7 @@ import 'package:animeapp/feature/anime_list/domain/usecases/get_favorite_animes_
 import 'package:animeapp/feature/anime_list/domain/usecases/toggle_favorite_usecase.dart';
 import 'package:animeapp/feature/anime_list/domain/usecases/get_favorite_totals_usecase.dart';
 import 'package:animeapp/feature/anime_list/domain/usecases/search_anime_usecase.dart';
+import 'package:animeapp/feature/anime_list/domain/usecases/get_anime_details_usecase.dart';
 
 class AnimeProvider extends ChangeNotifier {
   final GetTopAnimeUseCase getTopAnimeUseCase;
@@ -12,6 +13,7 @@ class AnimeProvider extends ChangeNotifier {
   final GetFavoriteAnimesUseCase getFavoriteAnimesUseCase;
   final ToggleFavoriteUseCase toggleFavoriteUseCase;
   final GetFavoriteTotalsUseCase getFavoriteTotalsUseCase;
+  final GetAnimeDetailsUseCase getAnimeDetailsUseCase;
 
   AnimeProvider({
     required this.getTopAnimeUseCase,
@@ -19,6 +21,7 @@ class AnimeProvider extends ChangeNotifier {
     required this.getFavoriteAnimesUseCase,
     required this.toggleFavoriteUseCase,
     required this.getFavoriteTotalsUseCase,
+    required this.getAnimeDetailsUseCase,
   });
 
   final List<AnimeEntity> _animes = [];
@@ -138,6 +141,49 @@ class AnimeProvider extends ChangeNotifier {
         await loadFavorites(); // Recarga automáticamente favoritos e incrementa totales
       },
     );
+  }
+
+  /// Obtiene la entidad enriquecida con todos los metadatos (tráiler, título japonés, sinopsis).
+  /// Si la entidad ya cuenta con los datos o no hay conexión, retorna lo disponible.
+  /// Si es favorita, actualiza la lista de favoritos en memoria y notifica a los oyentes.
+  Future<AnimeEntity> getEnrichedAnime(AnimeEntity currentAnime) async {
+    // Si ya tiene los campos clave completos, retornar de inmediato
+    if (currentAnime.titleJapanese != null &&
+        currentAnime.trailerYoutubeId != null &&
+        currentAnime.synopsis != null &&
+        currentAnime.synopsis!.isNotEmpty) {
+      return currentAnime;
+    }
+
+    final result = await getAnimeDetailsUseCase(currentAnime.malId);
+    return result.fold(
+      (failure) => currentAnime,
+      (enriched) {
+        // Actualizar en la lista de favoritos si existe
+        final favIndex = _favoriteAnimes.indexWhere((fav) => fav.malId == enriched.malId);
+        if (favIndex >= 0) {
+          _favoriteAnimes[favIndex] = enriched;
+          notifyListeners();
+        }
+        // Actualizar en la lista general si existe
+        final listIndex = _animes.indexWhere((a) => a.malId == enriched.malId);
+        if (listIndex >= 0) {
+          _animes[listIndex] = enriched;
+          notifyListeners();
+        }
+        return enriched;
+      },
+    );
+  }
+
+  /// Sincroniza y actualiza la lista de favoritos desde la base de datos y enriquece registros incompletos.
+  Future<void> refreshFavorites() async {
+    await loadFavorites();
+    for (final fav in _favoriteAnimes) {
+      if (fav.titleJapanese == null || fav.trailerYoutubeId == null || fav.synopsis == null) {
+        await getEnrichedAnime(fav);
+      }
+    }
   }
 
   void resetList() {

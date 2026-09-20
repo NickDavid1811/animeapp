@@ -6,7 +6,7 @@ import 'package:animeapp/feature/anime_list/presentation/provider/anime_provider
 import 'package:animeapp/core/utils/number_formatter.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
-class AnimeDetailBottomSheet extends StatelessWidget {
+class AnimeDetailBottomSheet extends StatefulWidget {
   final AnimeEntity anime;
 
   const AnimeDetailBottomSheet({
@@ -15,8 +15,37 @@ class AnimeDetailBottomSheet extends StatelessWidget {
   });
 
   @override
+  State<AnimeDetailBottomSheet> createState() => _AnimeDetailBottomSheetState();
+}
+
+class _AnimeDetailBottomSheetState extends State<AnimeDetailBottomSheet> {
+  late AnimeEntity _anime;
+
+  @override
+  void initState() {
+    super.initState();
+    _anime = widget.anime;
+    _enrichIfNeeded();
+  }
+
+  void _enrichIfNeeded() {
+    if (_anime.titleJapanese == null || _anime.trailerYoutubeId == null || _anime.synopsis == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted) return;
+        final enriched = await context.read<AnimeProvider>().getEnrichedAnime(_anime);
+        if (mounted) {
+          setState(() {
+            _anime = enriched;
+          });
+        }
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final anime = _anime;
     
     return Container(
       padding: const EdgeInsets.all(24),

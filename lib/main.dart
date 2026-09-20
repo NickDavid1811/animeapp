@@ -18,6 +18,7 @@ void main() async {
         getFavoriteAnimesUseCase: DI.getFavoriteAnimesUseCase,
         toggleFavoriteUseCase: DI.toggleFavoriteUseCase,
         getFavoriteTotalsUseCase: DI.getFavoriteTotalsUseCase,
+        getAnimeDetailsUseCase: DI.getAnimeDetailsUseCase,
       ),
       child: const MainApp(),
     ),

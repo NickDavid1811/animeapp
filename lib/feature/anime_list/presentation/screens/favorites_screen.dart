@@ -160,6 +160,28 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                           }).toList(),
                         ),
                         const SizedBox(width: 8),
+                        IconButton(
+                          icon: Icon(
+                            Icons.sync_rounded,
+                            color: theme.colorScheme.primary,
+                            size: 20,
+                          ),
+                          tooltip: 'Sincronizar y actualizar favoritos',
+                          style: IconButton.styleFrom(
+                            backgroundColor: theme.colorScheme.surfaceContainerHigh,
+                          ),
+                          onPressed: () {
+                            provider.refreshFavorites();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Sincronizando y actualizando favoritos...'),
+                                duration: Duration(seconds: 2),
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(width: 8),
                       ],
                       // Alternar tema
                       ValueListenableBuilder<ThemeMode>(
@@ -329,20 +351,39 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                                 ],
                               ),
                             )
-                          : LayoutBuilder(
-                              builder: (context, constraints) {
-                                final isWideScreen = constraints.maxWidth >= 600;
-                                
-                                if (isWideScreen) {
-                                  return GridView.builder(
+                          : RefreshIndicator(
+                              onRefresh: () => provider.refreshFavorites(),
+                              child: LayoutBuilder(
+                                builder: (context, constraints) {
+                                  final isWideScreen = constraints.maxWidth >= 600;
+                                  
+                                  if (isWideScreen) {
+                                    return GridView.builder(
+                                      physics: const AlwaysScrollableScrollPhysics(),
+                                      itemCount: displayedFavorites.length,
+                                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                                      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                                        maxCrossAxisExtent: 420,
+                                        childAspectRatio: 2.8,
+                                        crossAxisSpacing: 8,
+                                        mainAxisSpacing: 8,
+                                      ),
+                                      itemBuilder: (context, index) {
+                                        final anime = displayedFavorites[index];
+                                        return AnimeCard(
+                                          anime: anime,
+                                          isSaved: true,
+                                          showDeleteIcon: true,
+                                          onToggle: () => provider.toggleFavorite(anime),
+                                        );
+                                      },
+                                    );
+                                  }
+
+                                  return ListView.builder(
+                                    physics: const AlwaysScrollableScrollPhysics(),
                                     itemCount: displayedFavorites.length,
-                                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-                                    gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                                      maxCrossAxisExtent: 420,
-                                      childAspectRatio: 2.8,
-                                      crossAxisSpacing: 8,
-                                      mainAxisSpacing: 8,
-                                    ),
+                                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 20),
                                     itemBuilder: (context, index) {
                                       final anime = displayedFavorites[index];
                                       return AnimeCard(
@@ -353,22 +394,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                                       );
                                     },
                                   );
-                                }
-
-                                return ListView.builder(
-                                  itemCount: displayedFavorites.length,
-                                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 20),
-                                  itemBuilder: (context, index) {
-                                    final anime = displayedFavorites[index];
-                                    return AnimeCard(
-                                      anime: anime,
-                                      isSaved: true,
-                                      showDeleteIcon: true,
-                                      onToggle: () => provider.toggleFavorite(anime),
-                                    );
-                                  },
-                                );
-                              },
+                                },
+                              ),
                             ),
                 ),
               ],

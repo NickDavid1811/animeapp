@@ -8,4 +8,5 @@ abstract class AnimeRepositoryInterface {
   Future<Either<Failure, List<AnimeEntity>>> getFavoriteAnimes();
   Future<Either<Failure, void>> toggleFavorite(AnimeEntity anime);
   Future<Either<Failure, Map<String, int>>> getFavoriteTotals();
+  Future<Either<Failure, AnimeEntity>> getAnimeDetails(int malId);
 }
