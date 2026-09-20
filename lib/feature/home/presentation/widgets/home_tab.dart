@@ -51,8 +51,8 @@ class _HomeTabState extends State<HomeTab> {
     // Carga inicial si no hay datos
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final provider = context.read<AnimeProvider>();
-      if (provider.animes.isEmpty) {
-        provider.fetchNextPage();
+      if (provider.topAnimes.isEmpty) {
+        provider.loadTopAnimes();
       }
       provider.loadFavorites();
     });
@@ -92,14 +92,14 @@ class _HomeTabState extends State<HomeTab> {
 
     return Consumer<AnimeProvider>(
       builder: (context, provider, child) {
-        final featuredAnimes = provider.animes.take(5).toList();
+        final featuredAnimes = provider.topAnimes.take(5).toList();
         final recentFavorites = provider.favoriteAnimes.take(6).toList();
 
         return SafeArea(
           child: RefreshIndicator(
             onRefresh: () async {
               await Future.wait([
-                provider.clearSearch(),
+                provider.loadTopAnimes(forceRefresh: true),
                 provider.loadFavorites(),
               ]);
             },
@@ -188,7 +188,7 @@ class _HomeTabState extends State<HomeTab> {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        if (provider.animes.isNotEmpty)
+                        if (provider.topAnimes.isNotEmpty)
                           TextButton(
                             style: TextButton.styleFrom(
                               padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -211,7 +211,7 @@ class _HomeTabState extends State<HomeTab> {
                   const SizedBox(height: 8),
 
                   // Carousel Layout
-                  if (provider.isLoading && provider.animes.isEmpty)
+                  if (provider.isTopLoading && provider.topAnimes.isEmpty)
                     Container(
                       height: 180,
                       margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
@@ -252,7 +252,7 @@ class _HomeTabState extends State<HomeTab> {
                             ),
                             const SizedBox(height: 8),
                             ElevatedButton.icon(
-                              onPressed: () => provider.fetchNextPage(),
+                              onPressed: () => provider.loadTopAnimes(forceRefresh: true),
                               icon: const Icon(Icons.refresh_rounded),
                               label: const Text('Reintentar'),
                             ),
@@ -323,7 +323,7 @@ class _HomeTabState extends State<HomeTab> {
                   const SizedBox(height: 26),
 
                   // Ruleta Otaku / Anime Sorpresa
-                  _buildRandomAnimeBanner(context, provider.animes),
+                  _buildRandomAnimeBanner(context, provider.topAnimes),
 
                   const SizedBox(height: 26),
 
@@ -936,7 +936,7 @@ class _HomeTabState extends State<HomeTab> {
   /// Sección Top Ranking Global (#1 al #5)
   Widget _buildTopRankingSection(BuildContext context, AnimeProvider provider) {
     final theme = Theme.of(context);
-    final topAnimes = provider.animes.take(5).toList();
+    final topAnimes = provider.topAnimes.take(5).toList();
 
     if (topAnimes.isEmpty) {
       return const SizedBox.shrink();

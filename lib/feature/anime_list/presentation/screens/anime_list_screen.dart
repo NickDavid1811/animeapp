@@ -16,6 +16,7 @@ class _AnimeListScreenState extends State<AnimeListScreen> {
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
   Timer? _debounce;
+  String _lastSyncedQuery = '';
 
   @override
   void initState() {
@@ -41,8 +42,12 @@ class _AnimeListScreenState extends State<AnimeListScreen> {
   }
 
   void _onScroll() {
+    if (!_scrollController.hasClients) return;
     final provider = context.read<AnimeProvider>();
-    if (_scrollController.position.pixels >=
+    // Solo paginar si la lista realmente es scrolleable (maxScrollExtent > 50)
+    // para evitar que se dispare una segunda petición cuando la lista es corta
+    if (_scrollController.position.maxScrollExtent > 50 &&
+        _scrollController.position.pixels >=
             _scrollController.position.maxScrollExtent - 200 &&
         !provider.isLoading) {
       provider.fetchNextPage();
@@ -52,11 +57,16 @@ class _AnimeListScreenState extends State<AnimeListScreen> {
   void _onSearchChanged(String query) {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
     _debounce = Timer(const Duration(milliseconds: 500), () {
+      if (_scrollController.hasClients) {
+        _scrollController.jumpTo(0);
+      }
       final provider = context.read<AnimeProvider>();
-      if (query.trim().isEmpty) {
+      final trimmed = query.trim();
+      _lastSyncedQuery = trimmed;
+      if (trimmed.isEmpty) {
         provider.clearSearch();
       } else {
-        provider.search(query.trim());
+        provider.search(trimmed);
       }
     });
   }
@@ -66,7 +76,10 @@ class _AnimeListScreenState extends State<AnimeListScreen> {
     final theme = Theme.of(context);
     final providerQuery = context.select<AnimeProvider, String>((p) => p.currentQuery);
     final isDebouncing = _debounce?.isActive ?? false;
-    if (!isDebouncing && _searchController.text != providerQuery) {
+
+    // Solo sincronizar el texto si la consulta cambió externamente (ej: chip de categoría en inicio)
+    if (!isDebouncing && _searchController.text != providerQuery && _lastSyncedQuery != providerQuery) {
+      _lastSyncedQuery = providerQuery;
       _searchController.value = TextEditingValue(
         text: providerQuery,
         selection: TextSelection.collapsed(offset: providerQuery.length),
@@ -140,6 +153,10 @@ class _AnimeListScreenState extends State<AnimeListScreen> {
                               icon: const Icon(Icons.clear_rounded),
                               onPressed: () {
                                 _searchController.clear();
+                                _lastSyncedQuery = '';
+                                if (_scrollController.hasClients) {
+                                  _scrollController.jumpTo(0);
+                                }
                                 provider.clearSearch();
                               },
                             );

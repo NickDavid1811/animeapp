@@ -27,6 +27,13 @@ class AnimeProvider extends ChangeNotifier {
   final List<AnimeEntity> _animes = [];
   List<AnimeEntity> get animes => _animes;
 
+  // Lista dedicada y aislada para la vista de Inicio (Top / Destacados)
+  final List<AnimeEntity> _topAnimes = [];
+  List<AnimeEntity> get topAnimes => _topAnimes;
+
+  bool _isTopLoading = false;
+  bool get isTopLoading => _isTopLoading;
+
   List<AnimeEntity> _favoriteAnimes = [];
   List<AnimeEntity> get favoriteAnimes => _favoriteAnimes;
 
@@ -56,10 +63,40 @@ class AnimeProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Carga los animes destacados y de ranking para la vista de Inicio de forma independiente
+  Future<void> loadTopAnimes({bool forceRefresh = false}) async {
+    if (_isTopLoading) return;
+    if (_topAnimes.isNotEmpty && !forceRefresh) return;
+
+    _isTopLoading = true;
+    notifyListeners();
+
+    final result = await getTopAnimeUseCase(1);
+    result.fold(
+      (failure) {
+        // En caso de fallo, conservamos los datos previos si existen
+      },
+      (newAnimes) {
+        _topAnimes.clear();
+        final existingIds = <int>{};
+        for (final anime in newAnimes) {
+          if (!existingIds.contains(anime.malId)) {
+            _topAnimes.add(anime);
+            existingIds.add(anime.malId);
+          }
+        }
+      },
+    );
+
+    _isTopLoading = false;
+    notifyListeners();
+  }
+
   Future<void> search(String query) async {
-    if (query == _currentQuery) return;
+    final trimmed = query.trim();
+    if (trimmed == _currentQuery) return;
     
-    _currentQuery = query;
+    _currentQuery = trimmed;
     _animes.clear();
     _page = 1;
     
@@ -91,7 +128,14 @@ class AnimeProvider extends ChangeNotifier {
         _errorMessage = failure.message;
       },
       (newAnimes) {
-        _animes.addAll(newAnimes);
+        // Deduplicación estricta por malId para evitar duplicados en la lista
+        final existingIds = _animes.map((e) => e.malId).toSet();
+        for (final anime in newAnimes) {
+          if (!existingIds.contains(anime.malId)) {
+            _animes.add(anime);
+            existingIds.add(anime.malId);
+          }
+        }
         _page++;
       },
     );
@@ -169,6 +213,12 @@ class AnimeProvider extends ChangeNotifier {
         final listIndex = _animes.indexWhere((a) => a.malId == enriched.malId);
         if (listIndex >= 0) {
           _animes[listIndex] = enriched;
+          notifyListeners();
+        }
+        // Actualizar en la lista de top animes de inicio si existe
+        final topIndex = _topAnimes.indexWhere((a) => a.malId == enriched.malId);
+        if (topIndex >= 0) {
+          _topAnimes[topIndex] = enriched;
           notifyListeners();
         }
         return enriched;
