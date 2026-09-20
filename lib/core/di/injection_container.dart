@@ -9,9 +9,8 @@ import 'package:animeapp/feature/anime_list/domain/usecases/get_favorite_animes_
 import 'package:animeapp/feature/anime_list/domain/usecases/toggle_favorite_usecase.dart';
 import 'package:animeapp/feature/anime_list/domain/usecases/get_favorite_totals_usecase.dart';
 import 'package:animeapp/feature/anime_list/domain/usecases/search_anime_usecase.dart';
-
 import 'package:animeapp/feature/anime_list/domain/usecases/get_anime_details_usecase.dart';
-
+import 'package:animeapp/feature/anime_list/domain/usecases/get_random_anime_usecase.dart';
 import 'package:animeapp/shared/preferences/preferences_helper.dart';
 
 class DI {
@@ -29,6 +28,7 @@ class DI {
   static late final ToggleFavoriteUseCase toggleFavoriteUseCase;
   static late final GetFavoriteTotalsUseCase getFavoriteTotalsUseCase;
   static late final GetAnimeDetailsUseCase getAnimeDetailsUseCase;
+  static late final GetRandomAnimeUseCase getRandomAnimeUseCase;
 
   /// Inicializa todas las dependencias.
   /// Ahora es asíncrono para configurar la base de datos multiplataforma.
@@ -54,5 +54,6 @@ class DI {
     toggleFavoriteUseCase = ToggleFavoriteUseCase(animeRepository);
     getFavoriteTotalsUseCase = GetFavoriteTotalsUseCase(animeRepository);
     getAnimeDetailsUseCase = GetAnimeDetailsUseCase(animeRepository);
+    getRandomAnimeUseCase = GetRandomAnimeUseCase(animeRepository);
   }
 }

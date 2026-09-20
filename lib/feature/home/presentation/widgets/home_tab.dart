@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -23,7 +22,7 @@ class _DesktopScrollBehavior extends MaterialScrollBehavior {
 class HomeTab extends StatefulWidget {
   final VoidCallback onExploreTap;
   final VoidCallback? onFavoritesTap;
-  final void Function(String genre)? onGenreTap;
+  final void Function(String genreLabel, String genreQuery, int? genreId)? onGenreTap;
 
   const HomeTab({
     super.key,
@@ -323,7 +322,7 @@ class _HomeTabState extends State<HomeTab> {
                   const SizedBox(height: 26),
 
                   // Ruleta Otaku / Anime Sorpresa
-                  _buildRandomAnimeBanner(context, provider.topAnimes),
+                  _buildRandomAnimeBanner(context, provider),
 
                   const SizedBox(height: 26),
 
@@ -681,16 +680,17 @@ class _HomeTabState extends State<HomeTab> {
   /// Chips de géneros populares para acceso rápido
   Widget _buildGenreChips(BuildContext context) {
     final theme = Theme.of(context);
+    // Tuplas: (Etiqueta, Nombre en inglés para búsqueda, ID oficial MAL)
     final genres = const [
-      ('⚔️ Acción', 'Action'),
-      ('🪄 Fantasía', 'Fantasy'),
-      ('😂 Comedia', 'Comedy'),
-      ('💖 Romance', 'Romance'),
-      ('🥋 Shounen', 'Shounen'),
-      ('🚀 Sci-Fi', 'Sci-Fi'),
-      ('👻 Sobrenatural', 'Supernatural'),
-      ('🎭 Drama', 'Drama'),
-      ('🏆 Deportes', 'Sports'),
+      ('⚔️ Acción', 'Action', 1),
+      ('🪄 Fantasía', 'Fantasy', 10),
+      ('😂 Comedia', 'Comedy', 4),
+      ('💖 Romance', 'Romance', 22),
+      ('🥋 Shounen', 'Shounen', 27),
+      ('🚀 Sci-Fi', 'Sci-Fi', 24),
+      ('👻 Sobrenatural', 'Supernatural', 37),
+      ('🎭 Drama', 'Drama', 8),
+      ('🏆 Deportes', 'Sports', 30),
     ];
 
     return Column(
@@ -729,7 +729,7 @@ class _HomeTabState extends State<HomeTab> {
               itemCount: genres.length,
               separatorBuilder: (_, __) => const SizedBox(width: 8),
               itemBuilder: (context, index) {
-                final (label, query) = genres[index];
+                final (label, query, genreId) = genres[index];
                 return Material(
                   color: theme.colorScheme.surfaceContainerHigh,
                   borderRadius: BorderRadius.circular(20),
@@ -737,7 +737,7 @@ class _HomeTabState extends State<HomeTab> {
                     borderRadius: BorderRadius.circular(20),
                     onTap: () {
                       HapticFeedback.lightImpact();
-                      widget.onGenreTap?.call(query);
+                      widget.onGenreTap?.call(label, query, genreId);
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
@@ -839,7 +839,7 @@ class _HomeTabState extends State<HomeTab> {
   }
 
   /// Tarjeta de acción lúdica: Sorpréndeme / Ruleta Otaku
-  Widget _buildRandomAnimeBanner(BuildContext context, List<AnimeEntity> animes) {
+  Widget _buildRandomAnimeBanner(BuildContext context, AnimeProvider provider) {
     final theme = Theme.of(context);
 
     return Container(
@@ -900,18 +900,26 @@ class _HomeTabState extends State<HomeTab> {
           ),
           const SizedBox(width: 8),
           FilledButton.tonal(
-            onPressed: animes.isEmpty
+            onPressed: provider.isRandomLoading
                 ? null
-                : () {
+                : () async {
                     HapticFeedback.mediumImpact();
-                    final random = Random();
-                    final picked = animes[random.nextInt(animes.length)];
-                    ToastHelper.showToast(
-                      context,
-                      '¡Sorpresa! ${picked.title}',
-                      icon: Icons.auto_awesome_rounded,
-                    );
-                    AnimeDetailHelper.showDetail(context, picked);
+                    final picked = await provider.getRandomAnime();
+                    if (!context.mounted) return;
+                    if (picked != null) {
+                      ToastHelper.showToast(
+                        context,
+                        '¡Sorpresa! ${picked.title}',
+                        icon: Icons.auto_awesome_rounded,
+                      );
+                      AnimeDetailHelper.showDetail(context, picked);
+                    } else {
+                      ToastHelper.showToast(
+                        context,
+                        'No se pudo obtener un anime al azar. Intenta de nuevo.',
+                        icon: Icons.error_outline_rounded,
+                      );
+                    }
                   },
             style: FilledButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
@@ -919,14 +927,20 @@ class _HomeTabState extends State<HomeTab> {
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text('Girar'),
-                SizedBox(width: 4),
-                Icon(Icons.bolt_rounded, size: 16),
-              ],
-            ),
+            child: provider.isRandomLoading
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('Girar'),
+                      SizedBox(width: 4),
+                      Icon(Icons.bolt_rounded, size: 16),
+                    ],
+                  ),
           ),
         ],
       ),

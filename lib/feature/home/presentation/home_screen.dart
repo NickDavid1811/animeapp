@@ -30,8 +30,12 @@ class _HomeScreenState extends State<HomeScreen> {
             _currentIndex = 2;
           });
         },
-        onGenreTap: (genre) {
-          context.read<AnimeProvider>().search(genre);
+        onGenreTap: (genreLabel, genreQuery, genreId) {
+          context.read<AnimeProvider>().filterByGenre(
+            label: genreLabel,
+            query: genreQuery,
+            genreId: genreId,
+          );
           setState(() {
             _currentIndex = 1;
           });

@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:animeapp/shared/domain/entities/anime_entity.dart';
 import 'package:animeapp/feature/anime_list/domain/usecases/get_top_anime_usecase.dart';
@@ -6,6 +7,7 @@ import 'package:animeapp/feature/anime_list/domain/usecases/toggle_favorite_usec
 import 'package:animeapp/feature/anime_list/domain/usecases/get_favorite_totals_usecase.dart';
 import 'package:animeapp/feature/anime_list/domain/usecases/search_anime_usecase.dart';
 import 'package:animeapp/feature/anime_list/domain/usecases/get_anime_details_usecase.dart';
+import 'package:animeapp/feature/anime_list/domain/usecases/get_random_anime_usecase.dart';
 
 class AnimeProvider extends ChangeNotifier {
   final GetTopAnimeUseCase getTopAnimeUseCase;
@@ -14,6 +16,7 @@ class AnimeProvider extends ChangeNotifier {
   final ToggleFavoriteUseCase toggleFavoriteUseCase;
   final GetFavoriteTotalsUseCase getFavoriteTotalsUseCase;
   final GetAnimeDetailsUseCase getAnimeDetailsUseCase;
+  final GetRandomAnimeUseCase getRandomAnimeUseCase;
 
   AnimeProvider({
     required this.getTopAnimeUseCase,
@@ -22,6 +25,7 @@ class AnimeProvider extends ChangeNotifier {
     required this.toggleFavoriteUseCase,
     required this.getFavoriteTotalsUseCase,
     required this.getAnimeDetailsUseCase,
+    required this.getRandomAnimeUseCase,
   });
 
   final List<AnimeEntity> _animes = [];
@@ -33,6 +37,9 @@ class AnimeProvider extends ChangeNotifier {
 
   bool _isTopLoading = false;
   bool get isTopLoading => _isTopLoading;
+
+  bool _isRandomLoading = false;
+  bool get isRandomLoading => _isRandomLoading;
 
   List<AnimeEntity> _favoriteAnimes = [];
   List<AnimeEntity> get favoriteAnimes => _favoriteAnimes;
@@ -58,12 +65,22 @@ class AnimeProvider extends ChangeNotifier {
   String _currentQuery = '';
   String get currentQuery => _currentQuery;
 
+  String? _selectedGenreLabel;
+  String? get selectedGenreLabel => _selectedGenreLabel;
+
+  String? _selectedGenreQuery;
+  String? get selectedGenreQuery => _selectedGenreQuery;
+
+  int? _selectedGenreId;
+  int? get selectedGenreId => _selectedGenreId;
+
   void clearError() {
     _errorMessage = null;
     notifyListeners();
   }
 
-  /// Carga los animes destacados y de ranking para la vista de Inicio de forma independiente
+  /// Carga los animes destacados y de ranking para la vista de Inicio con limit=5
+  /// Optimización: Descarga solo los 5 que se muestran, ahorrando ~80% de ancho de banda y tiempo
   Future<void> loadTopAnimes({bool forceRefresh = false}) async {
     if (_isTopLoading) return;
     if (_topAnimes.isNotEmpty && !forceRefresh) return;
@@ -71,7 +88,7 @@ class AnimeProvider extends ChangeNotifier {
     _isTopLoading = true;
     notifyListeners();
 
-    final result = await getTopAnimeUseCase(1);
+    final result = await getTopAnimeUseCase(1, limit: 5);
     result.fold(
       (failure) {
         // En caso de fallo, conservamos los datos previos si existen
@@ -92,6 +109,63 @@ class AnimeProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Obtiene un anime aleatorio usando el endpoint oficial GET /random/anime
+  Future<AnimeEntity?> getRandomAnime() async {
+    _isRandomLoading = true;
+    notifyListeners();
+
+    final result = await getRandomAnimeUseCase();
+
+    _isRandomLoading = false;
+    notifyListeners();
+
+    return result.fold(
+      (failure) {
+        // Fallback resiliente: Si la API de random falla o no responde, escoge de la lista local
+        if (_topAnimes.isNotEmpty) {
+          return _topAnimes[Random().nextInt(_topAnimes.length)];
+        } else if (_animes.isNotEmpty) {
+          return _animes[Random().nextInt(_animes.length)];
+        }
+        return null;
+      },
+      (anime) => anime,
+    );
+  }
+
+  /// Filtra por categoría sin ensuciar la caja de texto de búsqueda
+  Future<void> filterByGenre({
+    required String label,
+    required String query,
+    int? genreId,
+  }) async {
+    _currentQuery = '';
+    _selectedGenreLabel = label;
+    _selectedGenreQuery = query;
+    _selectedGenreId = genreId;
+    _animes.clear();
+    _page = 1;
+    _errorMessage = null;
+    notifyListeners();
+
+    await fetchNextPage();
+  }
+
+  /// Limpia el filtro de categoría activo
+  Future<void> clearGenreFilter() async {
+    if (_selectedGenreId == null && _selectedGenreQuery == null) return;
+    _selectedGenreLabel = null;
+    _selectedGenreQuery = null;
+    _selectedGenreId = null;
+    _animes.clear();
+    _page = 1;
+    _errorMessage = null;
+    notifyListeners();
+
+    await fetchNextPage();
+  }
+
+  /// Búsqueda por texto escrito por el usuario
   Future<void> search(String query) async {
     final trimmed = query.trim();
     if (trimmed == _currentQuery) return;
@@ -99,6 +173,8 @@ class AnimeProvider extends ChangeNotifier {
     _currentQuery = trimmed;
     _animes.clear();
     _page = 1;
+    _errorMessage = null;
+    notifyListeners();
     
     await fetchNextPage();
   }
@@ -109,6 +185,8 @@ class AnimeProvider extends ChangeNotifier {
     _currentQuery = '';
     _animes.clear();
     _page = 1;
+    _errorMessage = null;
+    notifyListeners();
     
     await fetchNextPage();
   }
@@ -119,26 +197,88 @@ class AnimeProvider extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
-    final result = _currentQuery.isNotEmpty
-        ? await searchAnimeUseCase(_currentQuery, _page)
-        : await getTopAnimeUseCase(_page);
+    if (_selectedGenreQuery != null || _selectedGenreId != null) {
+      // 1. Filtrado por categoría
+      final result = await searchAnimeUseCase('', _page, genreId: _selectedGenreId);
 
-    result.fold(
-      (failure) {
-        _errorMessage = failure.message;
-      },
-      (newAnimes) {
-        // Deduplicación estricta por malId para evitar duplicados en la lista
-        final existingIds = _animes.map((e) => e.malId).toSet();
-        for (final anime in newAnimes) {
-          if (!existingIds.contains(anime.malId)) {
-            _animes.add(anime);
-            existingIds.add(anime.malId);
+      await result.fold(
+        (failure) async {
+          // Fallback resiliente si la API de Jikan da 504 por saturación al filtrar géneros:
+          // Obtenemos los Top animes (que siempre responden 200 OK en caché) y filtramos localmente
+          final topResult = await getTopAnimeUseCase(1);
+          topResult.fold(
+            (_) {
+              _errorMessage = failure.message;
+            },
+            (topList) {
+              final queryLower = (_selectedGenreQuery ?? '').toLowerCase();
+              final filtered = topList.where((a) => a.genres.any(
+                (g) => g.toLowerCase().contains(queryLower),
+              )).toList();
+
+              if (filtered.isNotEmpty) {
+                final existingIds = _animes.map((e) => e.malId).toSet();
+                for (final anime in filtered) {
+                  if (!existingIds.contains(anime.malId)) {
+                    _animes.add(anime);
+                    existingIds.add(anime.malId);
+                  }
+                }
+                _errorMessage = null;
+              } else {
+                _errorMessage = failure.message;
+              }
+            },
+          );
+        },
+        (newAnimes) async {
+          final existingIds = _animes.map((e) => e.malId).toSet();
+          for (final anime in newAnimes) {
+            if (!existingIds.contains(anime.malId)) {
+              _animes.add(anime);
+              existingIds.add(anime.malId);
+            }
           }
-        }
-        _page++;
-      },
-    );
+          _page++;
+        },
+      );
+    } else if (_currentQuery.isNotEmpty) {
+      // 2. Búsqueda por texto escrito
+      final result = await searchAnimeUseCase(_currentQuery, _page);
+      result.fold(
+        (failure) {
+          _errorMessage = failure.message;
+        },
+        (newAnimes) {
+          final existingIds = _animes.map((e) => e.malId).toSet();
+          for (final anime in newAnimes) {
+            if (!existingIds.contains(anime.malId)) {
+              _animes.add(anime);
+              existingIds.add(anime.malId);
+            }
+          }
+          _page++;
+        },
+      );
+    } else {
+      // 3. Catálogo general Top Anime (Paginado)
+      final result = await getTopAnimeUseCase(_page);
+      result.fold(
+        (failure) {
+          _errorMessage = failure.message;
+        },
+        (newAnimes) {
+          final existingIds = _animes.map((e) => e.malId).toSet();
+          for (final anime in newAnimes) {
+            if (!existingIds.contains(anime.malId)) {
+              _animes.add(anime);
+              existingIds.add(anime.malId);
+            }
+          }
+          _page++;
+        },
+      );
+    }
 
     _isLoading = false;
     notifyListeners();
@@ -241,6 +381,9 @@ class AnimeProvider extends ChangeNotifier {
     _page = 1;
     _errorMessage = null;
     _currentQuery = '';
+    _selectedGenreLabel = null;
+    _selectedGenreQuery = null;
+    _selectedGenreId = null;
     notifyListeners();
   }
 }

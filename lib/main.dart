@@ -19,6 +19,7 @@ void main() async {
         toggleFavoriteUseCase: DI.toggleFavoriteUseCase,
         getFavoriteTotalsUseCase: DI.getFavoriteTotalsUseCase,
         getAnimeDetailsUseCase: DI.getAnimeDetailsUseCase,
+        getRandomAnimeUseCase: DI.getRandomAnimeUseCase,
       ),
       child: const MainApp(),
     ),

@@ -8,7 +8,7 @@ class GetTopAnimeUseCase {
 
   GetTopAnimeUseCase(this.repository);
 
-  Future<Either<Failure, List<AnimeEntity>>> call(int page) {
-    return repository.getTopAnime(page);
+  Future<Either<Failure, List<AnimeEntity>>> call(int page, {int? limit}) {
+    return repository.getTopAnime(page, limit: limit);
   }
 }

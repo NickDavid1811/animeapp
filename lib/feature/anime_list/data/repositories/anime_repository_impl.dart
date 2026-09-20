@@ -19,13 +19,15 @@ class AnimeRepositoryImpl implements AnimeRepositoryInterface {
   });
 
   @override
-  Future<Either<Failure, List<AnimeEntity>>> getTopAnime(int page) async {
+  Future<Either<Failure, List<AnimeEntity>>> getTopAnime(int page, {int? limit}) async {
     try {
-      if (_pageCache.containsKey(page)) {
+      if (limit == null && _pageCache.containsKey(page)) {
         return Right(_pageCache[page]!);
       }
-      final List<AnimeEntity> fetched = await remoteDataSource.fetchTopAnime(page);
-      _pageCache[page] = fetched;
+      final List<AnimeEntity> fetched = await remoteDataSource.fetchTopAnime(page, limit: limit);
+      if (limit == null) {
+        _pageCache[page] = fetched;
+      }
       return Right(fetched);
     } catch (e) {
       return Left(ServerFailure(e.toString()));
@@ -33,9 +35,9 @@ class AnimeRepositoryImpl implements AnimeRepositoryInterface {
   }
 
   @override
-  Future<Either<Failure, List<AnimeEntity>>> searchAnime(String query, int page) async {
+  Future<Either<Failure, List<AnimeEntity>>> searchAnime(String query, int page, {int? genreId}) async {
     try {
-      final List<AnimeEntity> fetched = await remoteDataSource.searchAnime(query, page);
+      final List<AnimeEntity> fetched = await remoteDataSource.searchAnime(query, page, genreId: genreId);
       return Right(fetched);
     } catch (e) {
       // Fallback resiliente: Si la API externa falla (ej. error 504 de MyAnimeList),
@@ -142,6 +144,17 @@ class AnimeRepositoryImpl implements AnimeRepositoryInterface {
         await localDataSource.insertFavorite(AnimeDbModel.fromEntity(fetched));
       }
 
+      return Right(fetched);
+    } catch (e) {
+      final errorClean = e.toString().replaceFirst('Exception: ', '');
+      return Left(ServerFailure(errorClean));
+    }
+  }
+
+  @override
+  Future<Either<Failure, AnimeEntity>> getRandomAnime() async {
+    try {
+      final fetched = await remoteDataSource.fetchRandomAnime();
       return Right(fetched);
     } catch (e) {
       final errorClean = e.toString().replaceFirst('Exception: ', '');
