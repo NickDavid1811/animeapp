@@ -1,6 +1,8 @@
 # 🎌 AnimeApp
 
-Una aplicación moderna de descubrimiento y seguimiento de anime construida con **Flutter**, **Clean Architecture** y **Material Design 3**. Permite explorar los animes más populares del momento, buscar tus series favoritas, consultar sus detalles y gestionar una biblioteca personal con persistencia local. La app es responsiva y se adapta elegantemente a Android, Web y Desktop (Linux/Windows/macOS).
+Una aplicación moderna de descubrimiento, seguimiento y gestión de anime construida con **Flutter**, **Clean Architecture** y **Material Design 3**. Permite explorar los animes más populares del momento, buscar series con autocompletado resiliente, ver tráilers oficiales de YouTube, consultar sinopsis y géneros detallados, y gestionar una biblioteca personal de favoritos con filtros dinámicos, ordenamiento y persistencia local. 
+
+La app es 100% responsiva y se adapta con una experiencia inmersiva a Android, Web y Desktop (Linux/Windows/macOS).
 
 ---
 
@@ -8,15 +10,21 @@ Una aplicación moderna de descubrimiento y seguimiento de anime construida con 
 
 | Funcionalidad | Descripción |
 |---|---|
-| 🔥 **Top Anime** | Explora el ranking global de los animes más populares con scroll infinito. |
-| 🔍 **Búsqueda Avanzada** | Busca animes por nombre con *debounce* y carga paginada integrada fluidamente. |
-| 📋 **Detalles Adaptativos** | Consulta información detallada de cada anime (año, episodios, miembros). En móviles se muestra como un *Bottom Sheet*, y en Desktop/Web como un *Modal Dialog* inmersivo. |
-| ❤️ **Favoritos** | Guarda y elimina animes de tu biblioteca personal con un solo toque. |
-| 📊 **Estadísticas** | Panel de KPIs con el total de episodios y miembros de tu colección de favoritos. |
-| 🌗 **Tema Claro / Oscuro** | Cambia entre modo claro y oscuro con un toggle reactivo en tiempo real. |
-| 🏠 **Home con Carrusel** | Pantalla de inicio con carrusel de animes destacados (con scroll de ratón en PC) y vista rápida de favoritos recientes. |
-| 💾 **Persistencia Local** | Los favoritos se almacenan persistiendo en SQLite o `shared_preferences` según la plataforma. |
-| 🖼️ **Caché de Imágenes** | Las imágenes se cachean localmente para una experiencia fluida sin recargas excesivas. |
+| 🔥 **Top Anime** | Explora el ranking global de los animes más populares de MyAnimeList con scroll infinito y paginación reactiva. |
+| 🔍 **Búsqueda Avanzada** | Búsqueda en vivo con debounce, paginación y fallback resiliente en memoria ante errores o caídas temporales de la API pública. |
+| 🎬 **Tráilers Oficiales** | Visualización directa y apertura del tráiler oficial en YouTube mediante `url_launcher` con extracción inteligente de IDs desde `youtube_id`, `embed_url` y URLs directas. |
+| ⛩️ **Títulos Bilingües** | Visualización del título principal junto al título original en japonés (`title_japanese`) como subtítulo decorativo y contextual. |
+| ⭐ **Scores y Géneros** | Badges de puntuación de la crítica (ej. `★ 9.34`) y chips de géneros dinámicos (Acción, Aventura, Fantasía, etc.). |
+| 📖 **Sinopsis Inmersiva** | Lectura de la trama completa con scroll independiente en la vista de detalle adaptativa. |
+| 📋 **Detalles Adaptativos** | Experiencia adaptativa según la pantalla: *Bottom Sheet* fluido en móviles y *Dialog modal centrado* en Desktop y Web. |
+| ❤️ **Gestión de Favoritos** | Guarda y elimina animes de tu biblioteca personal con actualización reactiva instantánea. |
+| 🎯 **Filtros y Búsqueda en Favoritos** | Barra de búsqueda instantánea interna y selector de chips interactivo por géneros para filtrar tu colección al vuelo. |
+| 🔃 **Ordenamiento Flexible** | Ordena tus favoritos por: **Más reciente**, **Mejor puntuación (★)** o **Alfabéticamente (A-Z)**. |
+| 🔄 **Sincronización Automática** | Reconciliación transparente en caché y enriquecimiento bajo demanda (*Lazy Detail Fetch*) para favoritos antiguos, además de soporte para *Pull-to-refresh*. |
+| 🌗 **Tema Claro / Oscuro** | Modo claro y oscuro con transiciones suaves y persistencia de preferencias de usuario. |
+| 🏠 **Home con Carrusel** | Portada con carrusel interactivo de animes destacados (soporte para rueda de ratón en PC) y vista rápida de guardados recientes. |
+| 💾 **Persistencia Local** | Almacenamiento local multiplataforma rápido y confiable respaldado en `shared_preferences`. |
+| 🖼️ **Caché Inteligente de Imágenes** | Caché optimizado de portadas en red para fluidez total y ahorro de datos. |
 
 ---
 
@@ -25,12 +33,13 @@ Una aplicación moderna de descubrimiento y seguimiento de anime construida con 
 | Categoría | Tecnología |
 |---|---|
 | **Framework** | Flutter (Dart SDK ^3.5.4) |
-| **Diseño** | Material Design 3 (`useMaterial3: true`) |
+| **Diseño** | Material Design 3 (`useMaterial3: true`) con paleta de colores tonal y adaptativa |
 | **State Management** | [Provider](https://pub.dev/packages/provider) ^6.1.5 |
-| **Arquitectura** | Clean Architecture estricta con soporte para [fpdart](https://pub.dev/packages/fpdart) (patrón `Either`) |
-| **API** | [Jikan API v4](https://jikan.moe/) (MyAnimeList no oficial) |
-| **Base de datos** | SQLite / `shared_preferences` (Soporte Multiplataforma) |
-| **HTTP Client** | [http](https://pub.dev/packages/http) ^1.6.0 |
+| **Arquitectura** | Clean Architecture estricta con soporte para programación funcional [fpdart](https://pub.dev/packages/fpdart) (patrón `Either`) |
+| **API** | [Jikan API v4](https://jikan.moe/) (REST API oficial no oficial de MyAnimeList) |
+| **Lanzador de URLs** | [url_launcher](https://pub.dev/packages/url_launcher) ^6.3.2 (Apertura de tráilers de YouTube) |
+| **Persistencia Local** | `shared_preferences` con adaptador `DatabaseHelper` multiplataforma |
+| **HTTP Client** | [http](https://pub.dev/packages/http) ^1.6.0 con manejo de timeouts y códigos de estado (502, 503, 504) |
 | **Tipografía** | [Google Fonts](https://pub.dev/packages/google_fonts) — Plus Jakarta Sans |
 | **Imágenes** | [cached_network_image](https://pub.dev/packages/cached_network_image) ^3.4.1 |
 
@@ -38,48 +47,73 @@ Una aplicación moderna de descubrimiento y seguimiento de anime construida con 
 
 ## 🏗️ Arquitectura (Clean Architecture)
 
-El proyecto sigue **Clean Architecture** separada por capas (Domain → Data → Presentation) garantizando independencia del framework y librerías externas.
+El proyecto implementa los principios de **Clean Architecture** y **SOLID**, separando estrictamente la lógica en capas desacopladas:
 
 ```
 lib/
-├── core/                                    # Configuración transversal
-│   ├── constants/api_constants.dart         # URLs y endpoints de la API
-│   ├── di/injection_container.dart          # Inyección de dependencias centralizada
-│   ├── errors/failure.dart                  # Tipado de errores (ServerFailure, CacheFailure)
-│   ├── theme/app_theme.dart                 # Sistema de diseño, Dark/Light mode
-│   └── utils/number_formatter.dart          # Utilidades visuales (1.2M, 340K)
+├── core/                                    # Configuración transversal e infraestructura base
+│   ├── constants/api_constants.dart         # URLs base y endpoints de la API
+│   ├── di/injection_container.dart          # Inyección de dependencias centralizada (Service Locator)
+│   ├── errors/failure.dart                  # Tipado de errores (ServerFailure, DatabaseFailure, etc.)
+│   ├── theme/app_theme.dart                 # Sistema de diseño, temas Light y Dark con persistencia
+│   └── utils/number_formatter.dart          # Formateador numérico abreviado (ej. 1.2M, 340K)
 │
 ├── feature/
-│   ├── anime_list/                          # Feature Principal
-│   │   ├── data/                            # ── DATOS ──
-│   │   │   ├── datasources/                 # APIs, BD Local, Preferencias
-│   │   │   ├── models/                      # Modelos serializables JSON/BD
-│   │   │   └── repositories/                # Implementación de repositorios
-│   │   ├── domain/                          # ── DOMINIO (Reglas de negocio) ──
-│   │   │   ├── repositories/                # Interfaces del repositorio
-│   │   │   └── usecases/                    # Casos de uso específicos (GetTopAnime, SearchAnime)
-│   │   └── presentation/                    # ── PRESENTACIÓN ──
-│   │       ├── provider/anime_provider.dart # Estado gestionado por Provider
-│   │       ├── screens/                     # Explore y Favorites screens
-│   │       ├── utils/anime_detail_helper.dart # Lógica para diálogos adaptativos
-│   │       └── widgets/                     # Tarjetas, modales, etc.
+│   ├── anime_list/                          # Feature de Lista, Exploración y Favoritos
+│   │   ├── data/                            # ── CAPA DATA ──
+│   │   │   ├── datasources/                 # Fuentes de datos remotas (Jikan) y locales (DB)
+│   │   │   ├── models/                      # AnimeModel (API) y AnimeDbModel (Local DB)
+│   │   │   └── repositories/                # AnimeRepositoryImpl (Caché, fallbacks y orquestación)
+│   │   │
+│   │   ├── domain/                          # ── CAPA DOMAIN (Reglas de Negocio Puras) ──
+│   │   │   ├── repositories/                # AnimeRepositoryInterface (Contratos)
+│   │   │   └── usecases/                    # Casos de uso atómicos (SRP):
+│   │   │       ├── get_top_anime_usecase.dart
+│   │   │       ├── search_anime_usecase.dart
+│   │   │       ├── get_anime_details_usecase.dart
+│   │   │       ├── get_favorite_animes_usecase.dart
+│   │   │       ├── toggle_favorite_usecase.dart
+│   │   │       └── get_favorite_totals_usecase.dart
+│   │   │
+│   │   └── presentation/                    # ── CAPA PRESENTATION ──
+│   │       ├── provider/anime_provider.dart # ChangeNotifier reactivo
+│   │       ├── screens/                     # ExploreScreen y FavoritesScreen
+│   │       ├── utils/anime_detail_helper.dart # Despliegue responsivo (Dialog vs BottomSheet)
+│   │       └── widgets/                     # Componentes visuales (AnimeCard unificado, modales, etc.)
 │   │
-│   └── home/                                # Tab/Dashboard
-│       └── presentation/                    # NavigationBar, carruseles, layout
+│   └── home/                                # Tab / Dashboard Principal
+│       └── presentation/                    # HomeScreen, NavigationBar y carruseles
 │
-├── shared/                                  # Compartidos entre features
-│   ├── database/database_helper.dart        # Helper de base de datos
-│   ├── domain/entities/anime_entity.dart    # Entidad principal de negocio
-│   └── preferences/preferences_helper.dart  # Gestión multiplataforma de config
+├── shared/                                  # Componentes globales compartidos
+│   ├── database/database_helper.dart        # Motor de persistencia local JSON seguro
+│   ├── domain/entities/anime_entity.dart    # Entidad pura de Anime del Dominio
+│   └── preferences/preferences_helper.dart  # Gestión de configuraciones del usuario
 │
-└── main.dart                                # Punto de entrada e inicialización
+└── main.dart                                # Inicialización asíncrona y arranque de la App
 ```
 
-### Principios Respetados
+### Principios de Diseño Destacados
 
-- **Inyección de Dependencias**: La capa `core/di` expone las clases preconstruidas a `main.dart`.
-- **Patrón Either (fpdart)**: La capa de Domain retorna estructuras `Either<Failure, T>` para manejar exitosamente los errores sin arrojar excepciones incontroladas a la vista.
-- **Entidades Globales**: Modelos core como `AnimeEntity` radican en `shared/domain` para permitir inter-conexión limpia entre features (`home` y `anime_list`).
+1. **Segregación de Casos de Uso (Single Responsibility Principle):**
+   Cada acción del usuario (obtener ranking, buscar, alternar favorito, obtener detalles) es un caso de uso independiente con el método ejecutable `call(...)`, permitiendo pruebas unitarias limpias e inyección desacoplada.
+2. **Componente de Tarjeta Unificado (`AnimeCard`):**
+   Un único componente reutilizable para listas exploratorias, resultados de búsqueda y favoritos, parametrizando acciones y estados con animaciones de elevación al pasar el ratón (*hover effects*).
+3. **Manejo Funcional de Errores con `fpdart`:**
+   Uso de `Either<Failure, T>` en el dominio y repositorio para garantizar que las excepciones no se propaguen descontroladamente a la interfaz de usuario.
+4. **Resiliencia ante Fallos de Red:**
+   El repositorio cuenta con caché de páginas en memoria y un fallback que permite buscar localmente en animes ya cargados si la API pública presenta intermitencias o errores 504.
+
+---
+
+## 🌐 Endpoints de la API
+
+La app consume la [Jikan REST API v4](https://docs.api.jikan.moe/):
+
+| Método | Endpoint | Propósito |
+|---|---|---|
+| `GET` | `/v4/top/anime?page={n}` | Ranking global de animes con paginación. |
+| `GET` | `/v4/anime?q={query}&page={n}` | Búsqueda por término de texto con paginación. |
+| `GET` | `/v4/anime/{id}` | Detalles individuales completos de un anime para enriquecimiento bajo demanda. |
 
 ---
 
@@ -88,40 +122,46 @@ lib/
 ### Prerrequisitos
 
 - [Flutter SDK](https://docs.flutter.dev/get-started/install) ≥ 3.5.4
-- Android Studio / VS Code
-- Emulador, Dispositivo Android o navegador web (Chrome).
+- Android Studio / VS Code con extensiones de Flutter y Dart.
+- Para Desktop en Linux: dependencias de desarrollo de GTK (`clang`, `cmake`, `ninja-build`, `pkg-config`, `libgtk-3-dev`).
 
-### Instalación
+### Instalación y Ejecución
 
 ```bash
-# 1. Clonar el repositorio y entrar
-git clone <repository-url>
+# 1. Clonar el repositorio
+git clone git@github.com:NickDavid1811/animeapp.git
 cd animeapp
 
-# 2. Instalar dependencias
+# 2. Obtener las dependencias
 flutter pub get
 
-# 3. Ejecutar la aplicación
-flutter run -d chrome # o linux, android, etc.
+# 3. Analizar la calidad del código
+flutter analyze
+
+# 4. Ejecutar la aplicación en tu plataforma preferida
+flutter run -d linux   # Ejecución nativa en Linux Desktop
+flutter run -d chrome  # Ejecución en Navegador Web
+flutter run -d android # Ejecución en Dispositivo / Emulador Android
 ```
 
----
+### Compilación para Producción (Linux Release)
 
-## 🌐 API
-
-La app consume la [Jikan API v4](https://docs.api.jikan.moe/).
-
-| Endpoint | Uso |
-|---|---|
-| `GET /v4/top/anime?page={n}` | Obtiene el ranking top con paginación. |
-| `GET /v4/anime?q={query}&page={n}` | Búsqueda avanzada de animes paginada. |
+```bash
+flutter build linux --release
+./build/linux/x64/release/bundle/animeapp
+```
 
 ---
 
 ## 📱 Plataformas Soportadas
 
-- ✅ **Android** (Teléfonos y Tablets)
-- ✅ **Web** (Chrome, Firefox, Safari)
-- ✅ **Linux** (Nativo con soporte de ratón y ventanas modales)
+- ✅ **Linux** (Nativo con soporte de ratón, hover animations, scroll horizontal y diálogos modales)
+- ✅ **Android** (Teléfonos y Tablets con *Bottom Sheets* gestuales y *pull-to-refresh*)
+- ✅ **Web** (Chrome, Firefox, Safari con layout adaptable)
+- ✅ **Windows / macOS** (Compatible con el pipeline multiplataforma de Flutter)
 
-*La interfaz responde activamente al ancho de la ventana, transformando carruseles, layouts de lista (List vs Grid), y los diálogos informativos.*
+---
+
+## 📄 Licencia
+
+Distribuido bajo la Licencia MIT. Consulta el archivo `LICENSE` si deseas más información.
