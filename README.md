@@ -144,13 +144,6 @@ flutter run -d chrome  # Ejecución en Navegador Web
 flutter run -d android # Ejecución en Dispositivo / Emulador Android
 ```
 
-### Compilación para Producción (Linux Release)
-
-```bash
-flutter build linux --release
-./build/linux/x64/release/bundle/animeapp
-```
-
 ---
 
 ## 📱 Plataformas Soportadas
