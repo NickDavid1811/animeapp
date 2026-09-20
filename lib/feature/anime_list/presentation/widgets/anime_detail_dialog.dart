@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:animeapp/shared/domain/entities/anime_entity.dart';
 import 'package:animeapp/feature/anime_list/presentation/provider/anime_provider.dart';
 import 'package:animeapp/core/utils/number_formatter.dart';
+import 'package:animeapp/core/utils/toast_helper.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 class AnimeDetailDialog extends StatefulWidget {
@@ -97,21 +98,9 @@ class _AnimeDetailDialogState extends State<AnimeDetailDialog> {
                                 onTap: () async {
                                   await Clipboard.setData(ClipboardData(text: anime.titleJapanese!));
                                   if (context.mounted) {
-                                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Row(
-                                          children: [
-                                            const Icon(Icons.check_circle_outline_rounded, color: Colors.white, size: 18),
-                                            const SizedBox(width: 8),
-                                            Expanded(
-                                              child: Text('Copiado al portapapeles: ${anime.titleJapanese!}'),
-                                            ),
-                                          ],
-                                        ),
-                                        behavior: SnackBarBehavior.floating,
-                                        duration: const Duration(seconds: 2),
-                                      ),
+                                    ToastHelper.showToast(
+                                      context,
+                                      'Copiado al portapapeles: ${anime.titleJapanese!}',
                                     );
                                   }
                                 },
