@@ -120,69 +120,6 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                         ),
                       ],
                       const Spacer(),
-                      // Botón de Ordenamiento
-                      if (allFavorites.isNotEmpty) ...[
-                        PopupMenuButton<FavoriteSortOption>(
-                          icon: Icon(
-                            _sortOption.icon,
-                            color: theme.colorScheme.primary,
-                            size: 20,
-                          ),
-                          tooltip: 'Ordenar por',
-                          style: IconButton.styleFrom(
-                            backgroundColor: theme.colorScheme.surfaceContainerHigh,
-                          ),
-                          onSelected: (option) => setState(() => _sortOption = option),
-                          itemBuilder: (context) => FavoriteSortOption.values.map((option) {
-                            final isSelected = _sortOption == option;
-                            return PopupMenuItem(
-                              value: option,
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    option.icon,
-                                    size: 18,
-                                    color: isSelected
-                                        ? theme.colorScheme.primary
-                                        : theme.colorScheme.onSurfaceVariant,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    option.label,
-                                    style: TextStyle(
-                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                      color: isSelected ? theme.colorScheme.primary : null,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                        const SizedBox(width: 8),
-                        IconButton(
-                          icon: Icon(
-                            Icons.sync_rounded,
-                            color: theme.colorScheme.primary,
-                            size: 20,
-                          ),
-                          tooltip: 'Sincronizar y actualizar favoritos',
-                          style: IconButton.styleFrom(
-                            backgroundColor: theme.colorScheme.surfaceContainerHigh,
-                          ),
-                          onPressed: () {
-                            provider.refreshFavorites();
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Sincronizando y actualizando favoritos...'),
-                                duration: Duration(seconds: 2),
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          },
-                        ),
-                        const SizedBox(width: 8),
-                      ],
                       // Alternar tema
                       ValueListenableBuilder<ThemeMode>(
                         valueListenable: AppTheme.themeNotifier,
@@ -227,15 +164,60 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                           decoration: InputDecoration(
                             hintText: 'Filtrar por nombre...',
                             prefixIcon: const Icon(Icons.search_rounded, size: 20),
-                            suffixIcon: _searchQuery.isNotEmpty
-                                ? IconButton(
+                            suffixIcon: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (_searchQuery.isNotEmpty)
+                                  IconButton(
                                     icon: const Icon(Icons.clear_rounded, size: 18),
+                                    tooltip: 'Limpiar filtro',
                                     onPressed: () {
                                       _searchController.clear();
                                       setState(() => _searchQuery = '');
                                     },
-                                  )
-                                : null,
+                                  ),
+                                PopupMenuButton<FavoriteSortOption>(
+                                  icon: Icon(
+                                    _sortOption.icon,
+                                    color: theme.colorScheme.primary,
+                                    size: 20,
+                                  ),
+                                  tooltip: 'Ordenar por: ${_sortOption.label}',
+                                  elevation: 8,
+                                  position: PopupMenuPosition.under,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  onSelected: (option) => setState(() => _sortOption = option),
+                                  itemBuilder: (context) => FavoriteSortOption.values.map((option) {
+                                    final isSelected = _sortOption == option;
+                                    return PopupMenuItem(
+                                      value: option,
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            option.icon,
+                                            size: 18,
+                                            color: isSelected
+                                                ? theme.colorScheme.primary
+                                                : theme.colorScheme.onSurfaceVariant,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            option.label,
+                                            style: TextStyle(
+                                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                              color: isSelected ? theme.colorScheme.primary : null,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  }).toList(),
+                                ),
+                                const SizedBox(width: 4),
+                              ],
+                            ),
                             filled: true,
                             fillColor: theme.colorScheme.surfaceContainerHigh,
                             border: OutlineInputBorder(
