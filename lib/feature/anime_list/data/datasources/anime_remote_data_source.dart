@@ -30,12 +30,15 @@ class AnimeRemoteDataSourceImpl implements AnimeRemoteDataSourceInterface {
   Future<List<AnimeModel>> searchAnime(String query, int page) async {
     final response = await client.get(
       Uri.parse('${ApiConstants.baseUrl}${ApiConstants.searchAnimeEndpoint}?q=$query&page=$page'),
-    );
+    ).timeout(const Duration(seconds: 8));
+
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       return (data['data'] as List).map((anime) => AnimeModel.fromJson(anime)).toList();
+    } else if (response.statusCode == 504 || response.statusCode == 502 || response.statusCode == 503) {
+      throw Exception('El servidor de MyAnimeList / Jikan está caído o saturado (Error ${response.statusCode}).');
     } else {
-      throw Exception('Failed to search anime');
+      throw Exception('Error al buscar anime (Código ${response.statusCode}).');
     }
   }
 }

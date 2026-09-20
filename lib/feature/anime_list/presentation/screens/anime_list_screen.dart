@@ -159,6 +159,43 @@ class _AnimeListScreenState extends State<AnimeListScreen> {
                     return const Center(child: CircularProgressIndicator());
                   }
 
+                  if (provider.errorMessage != null && provider.animes.isEmpty) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 32),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.cloud_off_rounded, size: 64, color: theme.colorScheme.error),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Problema de conexión con el servidor',
+                              textAlign: TextAlign.center,
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                color: theme.colorScheme.onSurface,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              provider.errorMessage!,
+                              textAlign: TextAlign.center,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.colorScheme.outline,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            ElevatedButton.icon(
+                              onPressed: () => provider.fetchNextPage(),
+                              icon: const Icon(Icons.refresh_rounded),
+                              label: const Text('Reintentar'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+
                   if (!provider.isLoading && provider.animes.isEmpty && provider.currentQuery.isNotEmpty) {
                     return Center(
                       child: Column(
