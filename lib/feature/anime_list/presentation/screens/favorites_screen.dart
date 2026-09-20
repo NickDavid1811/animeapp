@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:animeapp/shared/domain/entities/anime_entity.dart';
 import 'package:animeapp/feature/anime_list/presentation/provider/anime_provider.dart';
 import 'package:animeapp/feature/anime_list/presentation/widgets/anime_card.dart';
 import 'package:animeapp/core/theme/app_theme.dart';
+import 'package:animeapp/core/utils/toast_helper.dart';
 
 enum FavoriteSortOption {
   recent('Más recientes', Icons.history_rounded),
@@ -27,6 +29,45 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   String _searchQuery = '';
   String _selectedGenre = 'Todos';
   FavoriteSortOption _sortOption = FavoriteSortOption.recent;
+  double _dragDistance = 0.0;
+
+  void _cycleSortOption({required bool forward}) {
+    final values = FavoriteSortOption.values;
+    final currentIndex = values.indexOf(_sortOption);
+    final nextIndex = forward
+        ? (currentIndex + 1) % values.length
+        : (currentIndex - 1 + values.length) % values.length;
+    final newOption = values[nextIndex];
+
+    setState(() {
+      _sortOption = newOption;
+    });
+
+    HapticFeedback.selectionClick();
+
+    ToastHelper.showToast(
+      context,
+      'Orden: ${newOption.label}',
+      icon: newOption.icon,
+      duration: const Duration(milliseconds: 1600),
+    );
+  }
+
+  void _onVerticalDragUpdate(DragUpdateDetails details) {
+    _dragDistance += details.delta.dy;
+  }
+
+  void _onVerticalDragEnd(DragEndDetails details) {
+    final velocity = details.primaryVelocity ?? 0.0;
+    if (velocity > 80 || _dragDistance > 18) {
+      // Deslizar hacia abajo: siguiente opción
+      _cycleSortOption(forward: true);
+    } else if (velocity < -80 || _dragDistance < -18) {
+      // Deslizar hacia arriba: opción anterior
+      _cycleSortOption(forward: false);
+    }
+    _dragDistance = 0.0;
+  }
 
   @override
   void initState() {
@@ -156,76 +197,94 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                     padding: const EdgeInsets.fromLTRB(24, 6, 24, 8),
                     child: Align(
                       alignment: Alignment.centerLeft,
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 600),
-                        child: TextField(
-                          controller: _searchController,
-                          onChanged: (val) => setState(() => _searchQuery = val.trim()),
-                          decoration: InputDecoration(
-                            hintText: 'Filtrar por nombre...',
-                            prefixIcon: const Icon(Icons.search_rounded, size: 20),
-                            suffixIcon: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                if (_searchQuery.isNotEmpty)
-                                  IconButton(
-                                    icon: const Icon(Icons.clear_rounded, size: 18),
-                                    tooltip: 'Limpiar filtro',
-                                    onPressed: () {
-                                      _searchController.clear();
-                                      setState(() => _searchQuery = '');
-                                    },
-                                  ),
-                                PopupMenuButton<FavoriteSortOption>(
-                                  icon: Icon(
-                                    _sortOption.icon,
-                                    color: theme.colorScheme.primary,
-                                    size: 20,
-                                  ),
-                                  tooltip: 'Ordenar por: ${_sortOption.label}',
-                                  elevation: 8,
-                                  position: PopupMenuPosition.under,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  onSelected: (option) => setState(() => _sortOption = option),
-                                  itemBuilder: (context) => FavoriteSortOption.values.map((option) {
-                                    final isSelected = _sortOption == option;
-                                    return PopupMenuItem(
-                                      value: option,
-                                      child: Row(
-                                        children: [
-                                          Icon(
-                                            option.icon,
-                                            size: 18,
-                                            color: isSelected
-                                                ? theme.colorScheme.primary
-                                                : theme.colorScheme.onSurfaceVariant,
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Text(
-                                            option.label,
-                                            style: TextStyle(
-                                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                              color: isSelected ? theme.colorScheme.primary : null,
-                                            ),
-                                          ),
-                                        ],
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.translucent,
+                        onVerticalDragUpdate: _onVerticalDragUpdate,
+                        onVerticalDragEnd: _onVerticalDragEnd,
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 600),
+                          child: TextField(
+                            controller: _searchController,
+                            onChanged: (val) => setState(() => _searchQuery = val.trim()),
+                            decoration: InputDecoration(
+                              hintText: 'Filtrar por nombre...',
+                              prefixIcon: const Icon(Icons.search_rounded, size: 20),
+                              suffixIcon: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (_searchQuery.isNotEmpty)
+                                    IconButton(
+                                      icon: const Icon(Icons.clear_rounded, size: 18),
+                                      tooltip: 'Limpiar filtro',
+                                      onPressed: () {
+                                        _searchController.clear();
+                                        setState(() => _searchQuery = '');
+                                      },
+                                    ),
+                                  GestureDetector(
+                                    behavior: HitTestBehavior.opaque,
+                                    onVerticalDragUpdate: _onVerticalDragUpdate,
+                                    onVerticalDragEnd: _onVerticalDragEnd,
+                                    child: PopupMenuButton<FavoriteSortOption>(
+                                      icon: AnimatedSwitcher(
+                                        duration: const Duration(milliseconds: 250),
+                                        transitionBuilder: (child, animation) => ScaleTransition(
+                                          scale: animation,
+                                          child: FadeTransition(opacity: animation, child: child),
+                                        ),
+                                        child: Icon(
+                                          _sortOption.icon,
+                                          key: ValueKey(_sortOption),
+                                          color: theme.colorScheme.primary,
+                                          size: 20,
+                                        ),
                                       ),
-                                    );
-                                  }).toList(),
-                                ),
-                                const SizedBox(width: 4),
-                              ],
+                                      tooltip: 'Desliza ↑/↓ o toca para ordenar: ${_sortOption.label}',
+                                      elevation: 8,
+                                      position: PopupMenuPosition.under,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                      onSelected: (option) => setState(() => _sortOption = option),
+                                      itemBuilder: (context) => FavoriteSortOption.values.map((option) {
+                                        final isSelected = _sortOption == option;
+                                        return PopupMenuItem(
+                                          value: option,
+                                          child: Row(
+                                            children: [
+                                              Icon(
+                                                option.icon,
+                                                size: 18,
+                                                color: isSelected
+                                                    ? theme.colorScheme.primary
+                                                    : theme.colorScheme.onSurfaceVariant,
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Text(
+                                                option.label,
+                                                style: TextStyle(
+                                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                                  color: isSelected ? theme.colorScheme.primary : null,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      }).toList(),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                ],
+                              ),
+                              filled: true,
+                              fillColor: theme.colorScheme.surfaceContainerHigh,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: BorderSide.none,
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                              isDense: true,
                             ),
-                            filled: true,
-                            fillColor: theme.colorScheme.surfaceContainerHigh,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: BorderSide.none,
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                            isDense: true,
                           ),
                         ),
                       ),
