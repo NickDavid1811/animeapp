@@ -8,16 +8,29 @@ class AnimeDbModel extends AnimeEntity {
     super.year,
     super.episodes,
     super.members,
+    super.score,
+    super.synopsis,
+    super.genres,
+    super.trailerYoutubeId,
   });
 
   factory AnimeDbModel.fromJson(Map<String, dynamic> json) {
+    List<String> parsedGenres = [];
+    if (json['genres'] is List) {
+      parsedGenres = (json['genres'] as List).map((e) => e.toString()).toList();
+    }
+
     return AnimeDbModel(
-      malId: json['malId'],
-      title: json['title'],
-      imageUrl: json['imageUrl'],
-      year: json['year'],
-      episodes: json['episodes'],
-      members: json['members'],
+      malId: json['malId'] as int,
+      title: json['title'] as String? ?? '',
+      imageUrl: json['imageUrl'] as String? ?? '',
+      year: json['year'] as int?,
+      episodes: json['episodes'] as int?,
+      members: json['members'] as int?,
+      score: json['score'] != null ? (json['score'] as num).toDouble() : null,
+      synopsis: json['synopsis'] as String?,
+      genres: parsedGenres,
+      trailerYoutubeId: json['trailerYoutubeId'] as String?,
     );
   }
 
@@ -29,6 +42,10 @@ class AnimeDbModel extends AnimeEntity {
       'year': year,
       'episodes': episodes,
       'members': members,
+      'score': score,
+      'synopsis': synopsis,
+      'genres': genres,
+      'trailerYoutubeId': trailerYoutubeId,
     };
   }
 
@@ -40,6 +57,10 @@ class AnimeDbModel extends AnimeEntity {
       year: entity.year,
       episodes: entity.episodes,
       members: entity.members,
+      score: entity.score,
+      synopsis: entity.synopsis,
+      genres: entity.genres,
+      trailerYoutubeId: entity.trailerYoutubeId,
     );
   }
 }

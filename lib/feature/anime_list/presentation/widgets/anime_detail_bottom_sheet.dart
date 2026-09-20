@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:animeapp/shared/domain/entities/anime_entity.dart';
 import 'package:animeapp/feature/anime_list/presentation/provider/anime_provider.dart';
 import 'package:animeapp/core/utils/number_formatter.dart';
@@ -77,7 +78,7 @@ class AnimeDetailBottomSheet extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 20),
+                  const SizedBox(width: 18),
                   // Details Column
                   Expanded(
                     child: Column(
@@ -88,25 +89,56 @@ class AnimeDetailBottomSheet extends StatelessWidget {
                           style: theme.textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
-                          maxLines: 3,
+                          maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 12),
-                        // Badges
+                        const SizedBox(height: 10),
+                        // Badges (Score, Year, Episodes)
                         Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
+                          spacing: 6,
+                          runSpacing: 6,
+                          crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
+                            if (anime.score != null)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFFB300).withAlpha(40),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color: const Color(0xFFFFB300).withAlpha(120),
+                                    width: 0.8,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(
+                                      Icons.star_rounded,
+                                      size: 14,
+                                      color: Color(0xFFFFB300),
+                                    ),
+                                    const SizedBox(width: 3),
+                                    Text(
+                                      anime.score!.toStringAsFixed(2),
+                                      style: theme.textTheme.labelSmall?.copyWith(
+                                        color: const Color(0xFFFFB300),
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             if (anime.year != null)
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                 decoration: BoxDecoration(
                                   color: theme.colorScheme.primaryContainer,
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(
                                   '${anime.year}',
-                                  style: theme.textTheme.labelMedium?.copyWith(
+                                  style: theme.textTheme.labelSmall?.copyWith(
                                     color: theme.colorScheme.onPrimaryContainer,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -114,14 +146,14 @@ class AnimeDetailBottomSheet extends StatelessWidget {
                               ),
                             if (anime.episodes != null)
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                 decoration: BoxDecoration(
                                   color: theme.colorScheme.secondaryContainer,
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(
                                   '${anime.episodes} eps',
-                                  style: theme.textTheme.labelMedium?.copyWith(
+                                  style: theme.textTheme.labelSmall?.copyWith(
                                     color: theme.colorScheme.onSecondaryContainer,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -129,48 +161,105 @@ class AnimeDetailBottomSheet extends StatelessWidget {
                               ),
                           ],
                         ),
-                        const SizedBox(height: 16),
-                        // Popularity / Members row
+                        
+                        // Genre Badges
+                        if (anime.genres.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 4,
+                            runSpacing: 4,
+                            children: anime.genres.take(3).map((genre) => Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.surfaceContainerHighest,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                genre,
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  fontSize: 10,
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            )).toList(),
+                          ),
+                        ],
+
+                        const SizedBox(height: 10),
+                        // Members Row
                         Row(
                           children: [
                             Icon(
                               Icons.people_alt_rounded,
-                              size: 16,
+                              size: 14,
                               color: theme.colorScheme.outline,
                             ),
-                            const SizedBox(width: 6),
+                            const SizedBox(width: 4),
                             Text(
                               '${NumberFormatter.formatNumber(anime.members)} miembros',
-                              style: theme.textTheme.bodyMedium?.copyWith(
+                              style: theme.textTheme.labelSmall?.copyWith(
                                 color: theme.colorScheme.outline,
                               ),
                             ),
                           ],
                         ),
+
+                        // Trailer Button
+                        if (anime.trailerYoutubeId != null) ...[
+                          const SizedBox(height: 8),
+                          OutlinedButton.icon(
+                            onPressed: () async {
+                              final uri = Uri.parse('https://www.youtube.com/watch?v=${anime.trailerYoutubeId}');
+                              if (await canLaunchUrl(uri)) {
+                                await launchUrl(uri, mode: LaunchMode.externalApplication);
+                              }
+                            },
+                            icon: const Icon(Icons.play_circle_fill_rounded, color: Color(0xFFFF0000), size: 16),
+                            label: const Text('Ver Tráiler'),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                              visualDensity: VisualDensity.compact,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 18),
               Divider(color: theme.colorScheme.outlineVariant),
-              const SizedBox(height: 12),
-              // Synopsis Title / Short description
+              const SizedBox(height: 10),
+              // Synopsis
               Text(
-                'Información General',
-                style: theme.textTheme.titleMedium?.copyWith(
+                'Sinopsis',
+                style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                'Este anime cuenta con una popularidad de ${NumberFormatter.formatNumber(anime.members)} en las clasificaciones globales. Explora los detalles y agrégalo a tu biblioteca para llevar un conteo de sus episodios.',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                  height: 1.4,
+              const SizedBox(height: 6),
+              Container(
+                constraints: const BoxConstraints(maxHeight: 110),
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerHigh.withAlpha(80),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: Text(
+                    anime.synopsis?.isNotEmpty == true
+                        ? anime.synopsis!
+                        : 'No hay sinopsis disponible para este anime.',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      height: 1.4,
+                    ),
+                  ),
                 ),
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: 20),
               // Dynamic Action Button
               FilledButton.icon(
                 onPressed: () {

@@ -491,7 +491,9 @@ class _HomeTabState extends State<HomeTab> {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            'Recomendado',
+                            anime.score != null
+                                ? '★ ${anime.score!.toStringAsFixed(2)} • Recomendado'
+                                : 'Recomendado',
                             style: theme.textTheme.labelSmall?.copyWith(
                               color: theme.colorScheme.primary,
                               fontWeight: FontWeight.bold,

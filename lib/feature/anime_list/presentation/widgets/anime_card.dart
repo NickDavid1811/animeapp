@@ -110,6 +110,38 @@ class _AnimeCardState extends State<AnimeCard> with AutomaticKeepAliveClientMixi
                           // Row of badges/labels
                           Row(
                             children: [
+                              if (anime.score != null) ...[
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFFB300).withAlpha(35),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(
+                                      color: const Color(0xFFFFB300).withAlpha(90),
+                                      width: 0.8,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.star_rounded,
+                                        size: 13,
+                                        color: Color(0xFFFFB300),
+                                      ),
+                                      const SizedBox(width: 2),
+                                      Text(
+                                        anime.score!.toStringAsFixed(2),
+                                        style: theme.textTheme.labelSmall?.copyWith(
+                                          color: const Color(0xFFFFB300),
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                              ],
                               if (anime.year != null) ...[
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -127,7 +159,7 @@ class _AnimeCardState extends State<AnimeCard> with AutomaticKeepAliveClientMixi
                                 ),
                                 const SizedBox(width: 6),
                               ],
-                              if (anime.episodes != null)
+                              if (anime.episodes != null) ...[
                                 Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
@@ -139,6 +171,28 @@ class _AnimeCardState extends State<AnimeCard> with AutomaticKeepAliveClientMixi
                                     ),
                                   ],
                                 ),
+                                const SizedBox(width: 6),
+                              ],
+                              if (anime.genres.isNotEmpty) ...[
+                                Flexible(
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: theme.colorScheme.surfaceContainerHighest,
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      anime.genres.first,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: theme.textTheme.labelSmall?.copyWith(
+                                        color: theme.colorScheme.onSurfaceVariant,
+                                        fontSize: 10,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                           const SizedBox(height: 6),
