@@ -111,7 +111,10 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     
-    return Scaffold(
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      behavior: HitTestBehavior.translucent,
+      child: Scaffold(
       body: SafeArea(
         child: Consumer<AnimeProvider>(
           builder: (context, provider, child) {
@@ -205,6 +208,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                           constraints: const BoxConstraints(maxWidth: 600),
                           child: TextField(
                             controller: _searchController,
+                            textInputAction: TextInputAction.search,
+                            onSubmitted: (_) => FocusScope.of(context).unfocus(),
                             onChanged: (val) => setState(() => _searchQuery = val.trim()),
                             decoration: InputDecoration(
                               hintText: 'Filtrar por nombre...',
@@ -400,6 +405,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                                   
                                   if (isWideScreen) {
                                     return GridView.builder(
+                                      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                                       physics: const AlwaysScrollableScrollPhysics(),
                                       itemCount: displayedFavorites.length,
                                       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
@@ -422,6 +428,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                                   }
 
                                   return ListView.builder(
+                                    keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                                     physics: const AlwaysScrollableScrollPhysics(),
                                     itemCount: displayedFavorites.length,
                                     padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 20),
@@ -444,6 +451,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
           },
         ),
       ),
+    ),
     );
   }
 }

@@ -86,96 +86,102 @@ class _AnimeListScreenState extends State<AnimeListScreen> {
       );
     }
 
-    return Scaffold(
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Cabecera integrada en la página
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Explorar',
-                    style: theme.textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.onSurface,
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      behavior: HitTestBehavior.translucent,
+      child: Scaffold(
+        body: SafeArea(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Cabecera integrada en la página
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Explorar',
+                      style: theme.textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.onSurface,
+                      ),
                     ),
-                  ),
-                  ValueListenableBuilder<ThemeMode>(
-                    valueListenable: AppTheme.themeNotifier,
-                    builder: (_, ThemeMode currentMode, __) {
-                      final isDark = currentMode == ThemeMode.dark;
-                      return IconButton(
-                        style: IconButton.styleFrom(
-                          backgroundColor: theme.colorScheme.surfaceContainerHigh,
-                        ),
-                        icon: AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 300),
-                          transitionBuilder: (child, animation) =>
-                              RotationTransition(
-                            turns: animation,
-                            child: FadeTransition(opacity: animation, child: child),
+                    ValueListenableBuilder<ThemeMode>(
+                      valueListenable: AppTheme.themeNotifier,
+                      builder: (_, ThemeMode currentMode, __) {
+                        final isDark = currentMode == ThemeMode.dark;
+                        return IconButton(
+                          style: IconButton.styleFrom(
+                            backgroundColor: theme.colorScheme.surfaceContainerHigh,
                           ),
-                          child: Icon(
-                            isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
-                            key: ValueKey(isDark),
+                          icon: AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 300),
+                            transitionBuilder: (child, animation) =>
+                                RotationTransition(
+                              turns: animation,
+                              child: FadeTransition(opacity: animation, child: child),
+                            ),
+                            child: Icon(
+                              isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+                              key: ValueKey(isDark),
+                            ),
                           ),
-                        ),
-                        tooltip: isDark ? 'Modo Claro' : 'Modo Oscuro',
-                        onPressed: () => AppTheme.toggleAndPersist(),
-                      );
-                    },
-                  ),
-                ],
+                          tooltip: isDark ? 'Modo Claro' : 'Modo Oscuro',
+                          onPressed: () => AppTheme.toggleAndPersist(),
+                        );
+                      },
+                    ),
+                  ],
+                ),
               ),
-            ),
-            
-            // Buscador Adaptativo
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 600),
-                  child: TextField(
-                    controller: _searchController,
-                    onChanged: _onSearchChanged,
-                    decoration: InputDecoration(
-                      hintText: 'Buscar animes...',
-                      prefixIcon: const Icon(Icons.search_rounded),
-                      suffixIcon: Consumer<AnimeProvider>(
-                        builder: (context, provider, child) {
-                          if (provider.currentQuery.isNotEmpty || _searchController.text.isNotEmpty) {
-                            return IconButton(
-                              icon: const Icon(Icons.clear_rounded),
-                              onPressed: () {
-                                _searchController.clear();
-                                _lastSyncedQuery = '';
-                                if (_scrollController.hasClients) {
-                                  _scrollController.jumpTo(0);
-                                }
-                                provider.clearSearch();
-                              },
-                            );
-                          }
-                          return const SizedBox.shrink();
-                        },
+              
+              // Buscador Adaptativo
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 600),
+                    child: TextField(
+                      controller: _searchController,
+                      onChanged: _onSearchChanged,
+                      textInputAction: TextInputAction.search,
+                      onSubmitted: (_) => FocusScope.of(context).unfocus(),
+                      decoration: InputDecoration(
+                        hintText: 'Buscar animes...',
+                        prefixIcon: const Icon(Icons.search_rounded),
+                        suffixIcon: Consumer<AnimeProvider>(
+                          builder: (context, provider, child) {
+                            if (provider.currentQuery.isNotEmpty || _searchController.text.isNotEmpty) {
+                              return IconButton(
+                                icon: const Icon(Icons.clear_rounded),
+                                onPressed: () {
+                                  _searchController.clear();
+                                  _lastSyncedQuery = '';
+                                  if (_scrollController.hasClients) {
+                                    _scrollController.jumpTo(0);
+                                  }
+                                  provider.clearSearch();
+                                  FocusScope.of(context).unfocus();
+                                },
+                              );
+                            }
+                            return const SizedBox.shrink();
+                          },
+                        ),
+                        filled: true,
+                        fillColor: theme.colorScheme.surfaceContainerHigh,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide.none,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                       ),
-                      filled: true,
-                      fillColor: theme.colorScheme.surfaceContainerHigh,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                     ),
                   ),
                 ),
               ),
-            ),
 
             // Chip de filtro por categoría activa
             Consumer<AnimeProvider>(
@@ -343,6 +349,7 @@ class _AnimeListScreenState extends State<AnimeListScreen> {
                       if (isWideScreen) {
                         return GridView.builder(
                           controller: _scrollController,
+                          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                           padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
                           gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
                             maxCrossAxisExtent: 420,
@@ -368,6 +375,7 @@ class _AnimeListScreenState extends State<AnimeListScreen> {
 
                       return ListView.builder(
                         controller: _scrollController,
+                        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 20),
                         itemCount: provider.animes.length + (provider.isLoading ? 1 : 0),
                         itemBuilder: (context, index) {
@@ -394,6 +402,7 @@ class _AnimeListScreenState extends State<AnimeListScreen> {
           ],
         ),
       ),
+    ),
     );
   }
 }
